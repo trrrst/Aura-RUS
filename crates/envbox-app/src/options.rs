@@ -3,13 +3,13 @@
 
 /// Common regions supported by the Profile editor.
 pub const COMMON_REGIONS: &[&str] = &[
-    "CN", "US", "TW", "SG", "JP", "PH", "GB", "DE", "KR", "BO", "TR",
+    "CN", "US", "TW", "SG", "JP", "PH", "GB", "DE", "KR", "BO", "TR", "ES",
 ];
 
 /// Locale and UI language share the same Windows locale tokens.
 pub const COMMON_LOCALES: &[&str] = &[
     "zh-CN", "en-US", "zh-TW", "en-SG", "zh-SG", "ja-JP", "en-PH", "fil-PH", "en-GB", "de-DE",
-    "ko-KR", "es-BO", "tr-TR",
+    "ko-KR", "es-BO", "tr-TR", "es-ES",
 ];
 
 /// Shared Chinese region labels; unknown codes remain visible unchanged.
@@ -26,6 +26,7 @@ pub fn region_label(code: &str) -> String {
         "KR" => "Южная Корея".into(),
         "BO" => "Боливия".into(),
         "TR" => "Турция".into(),
+        "ES" => "Испания".into(),
         _ => code.to_string(),
     }
 }
@@ -80,6 +81,7 @@ fn iana_label(t: &str) -> String {
         "Europe/London" => Some("Лондон"),
         "Europe/Berlin" => Some("Берлин"),
         "Europe/Paris" => Some("Париж"),
+        "Europe/Madrid" => Some("Мадрид"),
         "Europe/Budapest" => Some("Будапешт"),
         "Europe/Warsaw" => Some("Варшава"),
         "Europe/Kyiv" | "Europe/Kiev" => Some("Киев"),

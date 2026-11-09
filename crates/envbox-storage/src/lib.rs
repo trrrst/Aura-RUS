@@ -242,6 +242,7 @@ pub const COMMON_TIMEZONE_PAIRS: &[(&str, &str)] = &[
     ("GMT Standard Time", "Europe/London"),
     ("W. Europe Standard Time", "Europe/Berlin"),
     ("Romance Standard Time", "Europe/Paris"),
+    ("Romance Standard Time", "Europe/Madrid"),
     ("Central Europe Standard Time", "Europe/Budapest"),
     ("Central European Standard Time", "Europe/Warsaw"),
     ("FLE Standard Time", "Europe/Kyiv"),
