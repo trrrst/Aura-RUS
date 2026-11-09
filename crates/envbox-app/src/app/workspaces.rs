@@ -93,7 +93,7 @@ impl WorkspaceState {
                 .containers
                 .iter_mut()
                 .find(|value| value.id == id)
-                .ok_or("环境配置运行记录已不存在，请刷新")?;
+                .ok_or("Запись запуска профиля больше не существует, обновите")?;
             // Only these fields are editable here; preserve freshly loaded opaque metadata.
             value.name = self.draft.name.clone();
             value.profile_id = self.draft.profile_id;
@@ -119,13 +119,13 @@ impl EnvBoxApp {
         match self.workspaces.save(&self.store) {
             Ok(()) => self.set_status(
                 StatusKind::Success,
-                "环境配置运行记录已保存；后续运行使用新的快照",
+                "Запись запуска профиля сохранена; следующие запуски используют новый снимок",
             ),
             Err(err) => {
                 self.workspaces.error = Some(err.clone());
                 self.set_status(
                     StatusKind::Error,
-                    format!("环境配置运行记录保存失败：{err}"),
+                    format!("Не удалось сохранить запись запуска профиля: {err}"),
                 );
             }
         }

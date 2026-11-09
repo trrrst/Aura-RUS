@@ -19,7 +19,7 @@ impl EnvBoxApp {
                 true
             }
             Err(error) => {
-                self.set_status(StatusKind::Error, format!("保存分栏宽度失败：{error}"));
+                self.set_status(StatusKind::Error, format!("Не удалось сохранить ширину панелей: {error}"));
                 false
             }
         }
@@ -27,7 +27,7 @@ impl EnvBoxApp {
 
     pub(super) fn finish_exit(&mut self, remember: bool) -> Task<Message> {
         if !self.pending_launches.is_empty() {
-            self.set_status(StatusKind::Info, "应用正在启动，请启动完成后再退出 Aura");
+            self.set_status(StatusKind::Info, "Приложение запускается; дождитесь окончания запуска, затем выходите из Aura");
             return Task::none();
         }
         if !self.flush_pane_ratios() {
@@ -35,7 +35,7 @@ impl EnvBoxApp {
         }
         if remember {
             if let Err(err) = close_behavior::save(self.store.root(), CloseBehavior::Exit) {
-                self.set_status(StatusKind::Error, format!("记住关闭选择失败：{err}"));
+                self.set_status(StatusKind::Error, format!("Не удалось запомнить выбор при закрытии: {err}"));
                 return Task::none();
             }
             self.close_behavior = CloseBehavior::Exit;
@@ -54,7 +54,7 @@ impl EnvBoxApp {
         if self.update_checking {
             self.set_status(
                 StatusKind::Info,
-                "更新正在进行，请等待检查或下载完成后再关闭 Aura",
+                "Идёт обновление; дождитесь окончания проверки или загрузки, затем закрывайте Aura",
             );
             return Task::none();
         }
@@ -83,7 +83,7 @@ impl EnvBoxApp {
                 true
             }
             Err(err) => {
-                self.close_error = Some(format!("记住选择失败：{err}"));
+                self.close_error = Some(format!("Не удалось запомнить выбор: {err}"));
                 false
             }
         }
@@ -99,7 +99,7 @@ impl EnvBoxApp {
                 Ok(tray) => tray,
                 Err(err) => {
                     self.close_dialog = true;
-                    self.close_error = Some(format!("无法最小化到系统托盘：{err}"));
+                    self.close_error = Some(format!("Не удалось свернуть в трей: {err}"));
                     return Task::none();
                 }
             };
@@ -117,7 +117,7 @@ impl EnvBoxApp {
         }
         #[cfg(not(windows))]
         {
-            self.close_error = Some("当前平台不支持系统托盘".into());
+            self.close_error = Some("Системный трей не поддерживается на этой платформе".into());
             Task::none()
         }
     }

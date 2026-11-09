@@ -164,7 +164,7 @@ impl Application {
             ));
         }
         if self.chrome_independent_data && !self.supports_chrome_data() {
-            return Err(DomainError::InvalidApplication("独立浏览器数据目录仅支持 Chrome 可执行应用".into()));
+            return Err(DomainError::InvalidApplication("Отдельный каталог данных браузера поддерживается только для приложений Chrome (исполняемый файл)".into()));
         }
         Ok(())
     }

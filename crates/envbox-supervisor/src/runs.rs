@@ -1647,7 +1647,7 @@ fn restore(run: &mut OwnedRun, generation: &str, deadline: std::time::Instant) -
     if result.entry_guarantee == crate::ENTRY_CHROME_COMPATIBILITY {
         run.observation_job = Some(job);
         return Err(io::Error::other(
-            "Chrome 兼容会话保持 TrackingLost：仅观测原 Job，不恢复控制；关闭对应浏览器后刷新，Job 归零才解除。若 Supervisor 离线期间原 Job 已消失，将保留失踪状态",
+            "Совместимый сеанс Chrome остаётся в TrackingLost: исходный Job только наблюдается, управление не восстанавливается; закройте браузер и обновите — состояние снимется, когда Job опустеет. Если Job исчез, пока Supervisor был недоступен, состояние «потерян» сохранится",
         ));
     }
     let members: Vec<_> = stats

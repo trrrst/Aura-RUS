@@ -26,11 +26,11 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     let dim = mouse_area(dim).on_press(Message::UnsavedCancel);
 
     let mut content = column![
-        text("有未保存的修改")
+        text("Есть несохранённые изменения")
             .size(TEXT_TITLE)
             .color(INK)
             .font(font::name_font()),
-        text("离开前要保存当前编辑的内容吗？")
+        text("Сохранить изменения перед уходом?")
             .size(TEXT_BODY)
             .color(INK_2)
             .font(font::ui_font()),
@@ -43,15 +43,15 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
 
     content = content.push(
         row![
-            button(text("继续编辑").size(TEXT_BODY).color(MUTED))
+            button(text("Продолжить правку").size(TEXT_BODY).color(MUTED))
                 .on_press(Message::UnsavedCancel)
                 .padding(Padding::from([8, 14]))
                 .style(secondary_btn),
-            button(text("放弃修改").size(TEXT_BODY).color(INK_2))
+            button(text("Отменить изменения").size(TEXT_BODY).color(INK_2))
                 .on_press(Message::UnsavedDiscard)
                 .padding(Padding::from([8, 14]))
                 .style(secondary_btn),
-            button(text("保存并继续").size(TEXT_BODY).color(INK))
+            button(text("Сохранить и продолжить").size(TEXT_BODY).color(INK))
                 .on_press(Message::UnsavedSave)
                 .padding(Padding::from([8, 14]))
                 .style(primary_btn),

@@ -12,20 +12,20 @@ use crate::widgets::{field_label, secondary_btn};
 
 pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_, Message> {
     let explanation = column![
-        text("严格模式：受支持的 DNS API 解析失败时，禁止回退宿主 DNS。")
+        text("Строгий режим: при ошибке разрешения через поддерживаемые DNS API откат на DNS хоста запрещён.")
             .size(TEXT_CAPTION)
             .font(font::ui_font()),
-        text("UDP、TCP、DoT、DoH 按列表顺序尝试，不自动添加上游。Host 模式使用宿主 DNS。")
+        text("UDP, TCP, DoT и DoH пробуются по порядку списка, серверы не добавляются автоматически. В режиме «Хост» используется DNS хоста.")
             .size(TEXT_CAPTION)
             .font(font::ui_font()),
-        text("应用自带 DNS/DoH/DoT/DoQ 可能绕过这些 API；浏览器 renderer 的信息覆盖需单独验证。")
+        text("Встроенный в приложение DNS/DoH/DoT/DoQ может обходить эти API; подмену в renderer браузера нужно проверять отдельно.")
             .size(TEXT_CAPTION)
             .font(font::ui_font()),
     ]
     .spacing(8);
     let help = tooltip(
         row![
-            text("说明")
+            text("Пояснение")
                 .size(TEXT_CAPTION)
                 .color(MUTED)
                 .font(font::ui_font()),
@@ -43,7 +43,7 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
     .style(inner_card_style);
     let mut content = column![
         row![
-            text("DNS 上游顺序")
+            text("Порядок DNS-серверов")
                 .size(TEXT_BODY)
                 .color(INK)
                 .font(font::name_font())
@@ -52,15 +52,15 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
         ]
         .spacing(8)
         .align_y(Alignment::Center),
-        checkbox("禁止回退宿主 DNS（严格模式）", editor.strict)
+        checkbox("Запретить откат на DNS хоста (строгий режим)", editor.strict)
             .on_toggle(Message::ProfileDnsStrict)
             .text_size(TEXT_BODY)
             .font(font::ui_font())
             .width(Fill),
         text(if mode == envbox_core::DnsMode::Host {
-            "当前跟随宿主 DNS；以下上游在虚拟模式下使用。"
+            "Сейчас используется DNS хоста; серверы ниже применяются в виртуальном режиме."
         } else {
-            "按从上到下的顺序尝试，失败后使用下一项。"
+            "Пробуются сверху вниз; при ошибке — следующий."
         })
         .size(TEXT_CAPTION)
         .color(MUTED)
@@ -74,7 +74,7 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
         .is_some_and(|dns| dns.validate_runtime_support().is_err())
     {
         content = content.push(
-            text("配置可以保存；当前 Runtime 不支持此协议、端口或非严格模式组合，启动会拒绝。")
+            text("Настройку можно сохранить, но текущий Runtime не поддерживает это сочетание протокола, порта или нестрогого режима — запуск будет отклонён.")
                 .size(TEXT_CAPTION)
                 .color(DANGER_TEXT)
                 .font(font::ui_font()),
@@ -86,7 +86,7 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
         .any(envbox_core::DnsUpstream::is_plaintext)
     {
         content = content.push(
-            text("含明文上游：按顺序尝试到 UDP / TCP 时，将发送明文查询。")
+            text("Есть незашифрованные серверы: при переходе к UDP / TCP запросы отправляются открытым текстом.")
                 .size(TEXT_CAPTION)
                 .color(MUTED)
                 .font(font::ui_font()),
@@ -94,7 +94,7 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
     }
     if editor.upstreams.is_empty() {
         content = content.push(
-            text("尚未添加上游")
+            text("DNS-серверы не добавлены")
                 .size(TEXT_CAPTION)
                 .color(MUTED)
                 .font(font::ui_font()),
@@ -106,11 +106,11 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
             .width(Fill);
         entry = entry.push(
             row![
-                button(text("上移").size(TEXT_BODY).font(font::ui_font()))
+                button(text("Выше").size(TEXT_BODY).font(font::ui_font()))
                     .padding(Padding::from([6, 10]))
                     .style(secondary_btn)
                     .on_press_maybe((index > 0).then_some(Message::ProfileDnsMove(index, true))),
-                button(text("下移").size(TEXT_BODY).font(font::ui_font()))
+                button(text("Ниже").size(TEXT_BODY).font(font::ui_font()))
                     .padding(Padding::from([6, 10]))
                     .style(secondary_btn)
                     .on_press_maybe(
@@ -118,7 +118,7 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
                             .then_some(Message::ProfileDnsMove(index, false))
                     ),
                 Space::new(Fill, 1),
-                button(text("移除").size(TEXT_BODY).font(font::ui_font()))
+                button(text("Убрать").size(TEXT_BODY).font(font::ui_font()))
                     .padding(Padding::from([6, 10]))
                     .style(secondary_btn)
                     .on_press(Message::ProfileDnsRemove(index)),
@@ -134,11 +134,11 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
         );
     }
     let mut draft = column![
-        text("添加 DNS 上游")
+        text("Добавить DNS-сервер")
             .size(TEXT_BODY)
             .color(INK_2)
             .font(font::name_font()),
-        field_label("协议"),
+        field_label("Протокол"),
         pick_list(
             TransportChoice::ALL,
             Some(editor.draft.transport),
@@ -163,9 +163,9 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
                 .font(font::ui_font())
                 .size(TEXT_BODY),
         );
-        draft = draft.push(field_label("连接 IP · 可选"));
+        draft = draft.push(field_label("IP для подключения · необязательно"));
         draft = draft.push(
-            text_input("IP 地址，多个用逗号分隔", &editor.draft.bootstrap)
+            text_input("IP-адреса через запятую", &editor.draft.bootstrap)
                 .on_input(Message::ProfileDnsBootstrap)
                 .style(input_style)
                 .padding(Padding::from([8, 10]))
@@ -173,12 +173,12 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
                 .size(TEXT_BODY),
         );
         draft = draft.push(
-            text("留空时由 Profile 中可直接连接的上游解析服务域名；无可用上游则失败，不使用宿主 DNS。手填 IP 将覆盖自动解析。")
+            text("Если пусто, имя сервиса разрешается через доступные напрямую серверы профиля; если таких нет — ошибка, DNS хоста не используется. Указанный вручную IP заменяет автоматическое разрешение.")
                 .size(TEXT_CAPTION)
                 .color(MUTED)
                 .font(font::ui_font()),
         );
-        draft = draft.push(field_label("TLS 证书验证"));
+        draft = draft.push(field_label("Проверка TLS-сертификата"));
         draft = draft.push(
             pick_list(
                 envbox_core::DnsTlsRevocation::ALL,
@@ -196,8 +196,8 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
         draft = draft.push(
             row![
                 column![
-                    field_label("IP 地址"),
-                    text_input("例如 1.1.1.1", &editor.draft.address)
+                    field_label("IP-адрес"),
+                    text_input("например, 1.1.1.1", &editor.draft.address)
                         .on_input(Message::ProfileDnsAddress)
                         .style(input_style)
                         .padding(Padding::from([8, 10]))
@@ -207,8 +207,8 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
                 .spacing(8)
                 .width(Fill),
                 column![
-                    field_label("端口"),
-                    text_input("端口", &editor.draft.port)
+                    field_label("Порт"),
+                    text_input("Порт", &editor.draft.port)
                         .on_input(Message::ProfileDnsPort)
                         .style(input_style)
                         .padding(Padding::from([8, 10]))
@@ -221,9 +221,9 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
             .spacing(8),
         );
         if editor.draft.transport == TransportChoice::Dot {
-            draft = draft.push(field_label("TLS 证书身份"));
+            draft = draft.push(field_label("Имя в TLS-сертификате"));
             draft = draft.push(
-                text_input("例如 cloudflare-dns.com", &editor.draft.server_name)
+                text_input("например, cloudflare-dns.com", &editor.draft.server_name)
                     .on_input(Message::ProfileDnsServerName)
                     .style(input_style)
                     .padding(Padding::from([8, 10]))
@@ -241,7 +241,7 @@ pub(super) fn view(editor: &DnsEditor, mode: envbox_core::DnsMode) -> Element<'_
         );
     }
     draft = draft.push(
-        button(text("添加上游").size(TEXT_BODY).font(font::ui_font()))
+        button(text("Добавить сервер").size(TEXT_BODY).font(font::ui_font()))
             .padding(Padding::from([6, 12]))
             .style(secondary_btn)
             .on_press(Message::ProfileDnsAdd),
@@ -266,7 +266,7 @@ pub(super) fn overview(profile: &envbox_core::DnsProfile) -> Element<'static, Me
     if profile.mode == envbox_core::DnsMode::Host {
         return content
             .push(
-                text("跟随系统 DNS")
+                text("Системный DNS")
                     .size(TEXT_BODY)
                     .color(INK_2)
                     .font(font::ui_font()),
@@ -275,9 +275,9 @@ pub(super) fn overview(profile: &envbox_core::DnsProfile) -> Element<'static, Me
     }
     content = content.push(
         text(if profile.strict {
-            "严格模式 · 禁止回退宿主 DNS"
+            "Строгий режим · без отката на DNS хоста"
         } else {
-            "非严格模式"
+            "Нестрогий режим"
         })
         .size(TEXT_BODY)
         .color(MUTED)
@@ -286,7 +286,7 @@ pub(super) fn overview(profile: &envbox_core::DnsProfile) -> Element<'static, Me
     let upstreams = profile.effective_upstreams();
     if upstreams.is_empty() {
         content = content.push(
-            text("尚未添加上游")
+            text("DNS-серверы не добавлены")
                 .size(TEXT_CAPTION)
                 .color(MUTED)
                 .font(font::ui_font()),
@@ -308,12 +308,12 @@ fn upstream_summary(
 ) -> Element<'static, Message> {
     let (transport, endpoint, details) = match upstream {
         envbox_core::DnsUpstream::Udp { address, port } => (
-            "UDP · 明文",
+            "UDP · без шифрования",
             std::net::SocketAddr::new(*address, *port).to_string(),
             None,
         ),
         envbox_core::DnsUpstream::Tcp { address, port } => (
-            "TCP · 明文",
+            "TCP · без шифрования",
             std::net::SocketAddr::new(*address, *port).to_string(),
             None,
         ),
@@ -322,25 +322,25 @@ fn upstream_summary(
             port,
             server_name,
         } => (
-            "DoT · 加密",
+            "DoT · шифрование",
             std::net::SocketAddr::new(*address, *port).to_string(),
-            Some(format!("证书身份：{server_name}")),
+            Some(format!("Имя сертификата: {server_name}")),
         ),
         envbox_core::DnsUpstream::Doh {
             url,
             bootstrap_ips,
             tls_revocation,
         } => (
-            "DoH · 加密",
+            "DoH · шифрование",
             url.clone(),
             Some(format!(
-                "{}\nTLS：{tls_revocation}",
+                "{}\nTLS: {tls_revocation}",
                 if bootstrap_ips.is_empty() {
-                    "连接 IP：自动；服务域名由 Profile 中可直接连接的上游解析，不使用宿主 DNS。"
+                    "IP для подключения: авто; имя сервиса разрешается через доступные напрямую серверы профиля, без DNS хоста."
                         .to_string()
                 } else {
                     format!(
-                        "手动连接 IP：\n{}",
+                        "IP, заданные вручную:\n{}",
                         bootstrap_ips
                             .iter()
                             .map(ToString::to_string)
@@ -361,7 +361,7 @@ fn upstream_summary(
     if let Some(details) = details {
         heading = heading.push(
             tooltip(
-                text("连接与证书")
+                text("Подключение и сертификат")
                     .size(TEXT_CAPTION)
                     .color(MUTED)
                     .font(font::ui_font()),

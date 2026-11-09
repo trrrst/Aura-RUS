@@ -9,14 +9,14 @@ use iced::{Alignment, Element, Fill, Padding};
 // Legacy route renders management only; startup belongs to the Applications page.
 pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     let management = &app.workspace_management;
-    let mut runs = column![text("后台管理实例")
+    let mut runs = column![text("Фоновые экземпляры")
         .size(TEXT_SECTION)
         .color(INK)
         .font(font::name_font())]
     .spacing(10);
     if management.busy {
         runs = runs.push(
-            text("正在更新运行管理状态…")
+            text("Обновление состояния запуска…")
                 .size(TEXT_BODY)
                 .color(MUTED)
                 .font(font::ui_font()),
@@ -24,7 +24,7 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     }
     if let Some(error) = &management.error {
         runs = runs.push(
-            text(format!("运行管理请求失败：{error}"))
+            text(format!("Ошибка запроса управления запуском: {error}"))
                 .size(TEXT_BODY)
                 .color(DANGER_TEXT)
                 .font(font::ui_font())
@@ -42,14 +42,14 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     if let Some(pending) = &management.pending_run {
         // Recovery is global: an application filter or deleted Profile must not hide it.
         runs = runs.push(technical_info(
-            "启动结果待确认".into(),
+            "Результат запуска не подтверждён".into(),
             format!(
-                "实例 ID：{}\n运行范围 ID：{}",
+                "ID экземпляра: {}\nID области запуска: {}",
                 pending.instance_id, pending.container_id
             ),
             INK_2,
         ));
-        let mut query = action("查询启动结果");
+        let mut query = action("Узнать результат запуска");
         if !management.busy {
             query = query.on_press(Message::WorkspaceRunStatus);
         }
@@ -83,7 +83,7 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
                     )
             })
             .count();
-        let mut heading = row![text(format!("环境：{}", profile_label(app, profile_id)))
+        let mut heading = row![text(format!("Окружение: {}", profile_label(app, profile_id)))
             .size(TEXT_BODY)
             .color(INK_2)
             .font(font::ui_font())
@@ -91,7 +91,7 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
         .spacing(8)
         .align_y(Alignment::Center);
         if app.instance_filter.is_none() && controllable > 1 {
-            let mut stop = action("停止此环境实例").style(theme::danger_btn);
+            let mut stop = action("Остановить этот экземпляр").style(theme::danger_btn);
             if !management.busy {
                 stop = stop.on_press(Message::ManagedProfileStop(profile_id));
             }
@@ -120,13 +120,13 @@ fn instance_card<'a>(
     let lost = result.state == "TrackingLost";
     let terminal = matches!(result.state.as_str(), "Exited" | "Stopped" | "Failed");
     let (status, color) = match result.state.as_str() {
-        "Running" => ("运行中", SUCCESS_TEXT),
-        "Starting" => ("启动中", INK_2),
-        "Stopping" => ("正在停止", MUTED),
-        "Exited" => ("已退出", MUTED),
-        "Stopped" => ("已停止", MUTED),
-        "Failed" => ("启动失败", DANGER_TEXT),
-        "TrackingLost" => ("跟踪已中断", DANGER_TEXT),
+        "Running" => ("Работает", SUCCESS_TEXT),
+        "Starting" => ("Запускается", INK_2),
+        "Stopping" => ("Останавливается", MUTED),
+        "Exited" => ("Завершён", MUTED),
+        "Stopped" => ("Остановлено", MUTED),
+        "Failed" => ("Ошибка запуска", DANGER_TEXT),
+        "TrackingLost" => ("Отслеживание прервано", DANGER_TEXT),
         other => (other, MUTED),
     };
     let application_name = app
@@ -134,7 +134,7 @@ fn instance_card<'a>(
         .iter()
         .find(|application| application.id == result.application_id)
         .map(|application| application.name.clone())
-        .unwrap_or_else(|| "应用已删除".into());
+        .unwrap_or_else(|| "Приложение удалено".into());
     let profile_name = profile_label(app, result.profile_id);
     let mut card = column![row![
         text(application_name)
@@ -151,7 +151,7 @@ fn instance_card<'a>(
     .align_y(Alignment::Center),]
     .spacing(10);
     card = card.push(
-        text(format!("环境：{profile_name}"))
+        text(format!("Окружение: {profile_name}"))
             .size(TEXT_CAPTION)
             .color(MUTED)
             .font(font::ui_font()),
@@ -164,13 +164,13 @@ fn instance_card<'a>(
     if running {
         let summary = match &result.environment_facts {
             Some(facts) if facts.config_complete && facts.profile_matches_snapshot => {
-                "主进程已载入匹配配置"
+                "Основной процесс загрузил нужную конфигурацию"
             }
-            Some(_) => "主进程配置未完整匹配",
-            None => "暂未取得主进程环境信息",
+            Some(_) => "Конфигурация основного процесса совпадает не полностью",
+            None => "Сведения об окружении основного процесса ещё не получены",
         };
         let summary = if result.entry_guarantee == envbox_supervisor::ENTRY_CHROME_COMPATIBILITY {
-            format!("{summary} · 兼容启动")
+            format!("{summary} · совместимый запуск")
         } else {
             summary.into()
         };
@@ -182,7 +182,7 @@ fn instance_card<'a>(
         );
         if observed < result.known_members.len() {
             card = card.push(
-                text("部分子进程尚无环境观测")
+                text("По некоторым дочерним процессам ещё нет данных об окружении")
                     .size(TEXT_CAPTION)
                     .color(MUTED)
                     .font(font::ui_font()),
@@ -190,9 +190,9 @@ fn instance_card<'a>(
         }
     } else if lost {
         let recovery = if result.entry_guarantee == envbox_supervisor::ENTRY_CHROME_COMPATIBILITY {
-            "浏览器可能仍在运行。请先关闭对应浏览器，再刷新状态；恢复条件见诊断详情。"
+            "Браузер, возможно, ещё работает. Закройте его и обновите состояние; условия восстановления — в диагностике."
         } else {
-            "应用可能仍在运行，暂时无法控制。请刷新状态，或查看诊断详情了解原因。"
+            "Приложение, возможно, ещё работает, но управлять им сейчас нельзя. Обновите состояние или посмотрите причину в диагностике."
         };
         card = card.push(
             text(recovery)
@@ -202,17 +202,17 @@ fn instance_card<'a>(
         );
     }
     let details_label = if expanded {
-        "收起详情"
+        "Скрыть подробности"
     } else if result.error.is_some() && !lost {
-        "查看失败原因"
+        "Причина ошибки"
     } else {
-        "诊断详情"
+        "Диагностика"
     };
     let mut controls =
         row![action(details_label).on_press(Message::WorkspaceDiagnostics(result.instance_id))]
             .spacing(8);
     if !terminal {
-        let mut stop = action("停止").style(theme::danger_btn);
+        let mut stop = action("Остановить").style(theme::danger_btn);
         if !management.busy
             && Some(result.supervisor_generation.as_str()) == management.generation.as_deref()
             && !lost
@@ -241,7 +241,7 @@ fn instance_diagnostics(view: &envbox_supervisor::RunView) -> Element<'_, Messag
         .count();
     let mut details = column![
         text(format!(
-            "运行方式：{}\n入口保证：{}",
+            "Способ запуска: {}\nГарантия точки входа: {}",
             result.mode,
             envbox_supervisor::entry_guarantee_label(&result.entry_guarantee)
         ))
@@ -249,7 +249,7 @@ fn instance_diagnostics(view: &envbox_supervisor::RunView) -> Element<'_, Messag
         .color(INK_2)
         .font(font::ui_font()),
         text(format!(
-            "已记录环境观测：{} / {} 个进程\n当前 Job 进程：{:?}",
+            "Данные об окружении получены: {} из {} процессов\nПроцессов в Job сейчас: {:?}",
             observed,
             result.known_members.len(),
             view.process_ids
@@ -263,17 +263,17 @@ fn instance_diagnostics(view: &envbox_supervisor::RunView) -> Element<'_, Messag
         let hooks = facts
             .hooks
             .iter()
-            .map(|hook| format!("{}：{} 个入口", hook.group, hook.attached_api_count))
+            .map(|hook| format!("{}: точек входа — {}", hook.group, hook.attached_api_count))
             .collect::<Vec<_>>()
             .join("\n");
-        details = details.push(text(format!("最近根进程观测\n配置完整：{}\nProfile 与快照匹配：{}\n已安装 Hook（不代表所有读取入口均已验证）\n{}",
-            if facts.config_complete { "是" } else { "否" },
-            if facts.profile_matches_snapshot { "是" } else { "否" },
-            if hooks.is_empty() { "未报告" } else { &hooks }))
+        details = details.push(text(format!("Последние данные корневого процесса\nКонфигурация полная: {}\nПрофиль совпадает со снимком: {}\nУстановленные хуки (не значит, что проверены все точки чтения)\n{}",
+            if facts.config_complete { "да" } else { "нет" },
+            if facts.profile_matches_snapshot { "да" } else { "нет" },
+            if hooks.is_empty() { "нет данных" } else { &hooks }))
             .size(TEXT_CAPTION).color(MUTED).font(font::ui_font()));
     }
     if result.entry_guarantee == envbox_supervisor::ENTRY_CHROME_COMPATIBILITY {
-        details = details.push(text("兼容启动核验根进程 Runtime，不使用严格入口门禁。沙箱子进程可能读取本机信息。退出 Aura 界面不会停止浏览器；Supervisor 重启后只观测原 Job，不恢复控制。关闭浏览器并刷新，确认 Job 归零后才解除跟踪中断；服务离线期间 Job 已消失时会保留中断状态。")
+        details = details.push(text("Совместимый запуск проверяет Runtime корневого процесса без строгого контроля точки входа. Дочерние процессы песочницы могут читать реальные сведения компьютера. Выход из Aura не останавливает браузер; после перезапуска Supervisor исходный Job только наблюдается, управление не восстанавливается. Закройте браузер и обновите — отслеживание восстановится, когда Job опустеет; если Job исчез, пока служба была недоступна, состояние прерывания сохранится.")
             .size(TEXT_CAPTION).color(MUTED).font(font::ui_font()));
     }
     if let Some(error) = &result.error {
@@ -285,7 +285,7 @@ fn instance_diagnostics(view: &envbox_supervisor::RunView) -> Element<'_, Messag
                 .wrapping(iced::widget::text::Wrapping::Glyph),
         );
     }
-    details = details.push(text(format!("根进程 PID：{}\n实例：{}\nApplication：{}\nSupervisor generation：{}\n配置身份：{}\n快照：{}",
+    details = details.push(text(format!("PID корневого процесса: {}\nЭкземпляр: {}\nApplication: {}\nSupervisor generation: {}\nИдентификатор конфигурации: {}\nСнимок: {}",
         result.root_pid, result.instance_id, result.application_id, result.supervisor_generation,
         result.configuration_id, result.snapshot_digest))
         .size(TEXT_CAPTION).color(MUTED).font(font::ui_font())
@@ -323,5 +323,5 @@ fn profile_label(app: &EnvBoxApp, id: uuid::Uuid) -> String {
         .iter()
         .find(|profile| profile.id == id)
         .map(|profile| profile.name.clone())
-        .unwrap_or_else(|| format!("已删除的环境 · {}", crate::widgets::short_id(id)))
+        .unwrap_or_else(|| format!("Удалённое окружение · {}", crate::widgets::short_id(id)))
 }

@@ -17,9 +17,9 @@ pub enum CloseBehavior {
 impl CloseBehavior {
     pub fn label(self) -> &'static str {
         match self {
-            Self::Ask => "每次询问",
-            Self::Tray => "最小化到系统托盘",
-            Self::Exit => "退出 Aura",
+            Self::Ask => "Спрашивать каждый раз",
+            Self::Tray => "Сворачивать в системный трей",
+            Self::Exit => "Выйти из Aura",
         }
     }
 }

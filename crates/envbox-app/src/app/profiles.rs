@@ -71,7 +71,7 @@ impl EnvBoxApp {
             .cloned();
         if let Some(profile) = profile {
             if let Err(error) = self.workspaces.bind_profile(&self.store, &profile) {
-                self.set_status(StatusKind::Error, format!("环境配置运行准备失败：{error}"));
+                self.set_status(StatusKind::Error, format!("Не удалось подготовить запуск профиля: {error}"));
             }
         } else {
             self.workspaces.clear(Uuid::nil());
@@ -162,14 +162,14 @@ impl EnvBoxApp {
         {
             Ok(dns) => dns,
             Err(err) => {
-                self.set_status(StatusKind::Error, format!("保存失败：{err}"));
+                self.set_status(StatusKind::Error, format!("Ошибка сохранения: {err}"));
                 return Task::none();
             }
         };
         let proxy = match self.profile_draft.proxy.to_profile() {
             Ok(proxy) => proxy,
             Err(error) => {
-                self.set_status(StatusKind::Error, format!("保存失败：{error}"));
+                self.set_status(StatusKind::Error, format!("Ошибка сохранения: {error}"));
                 return Task::none();
             }
         };
@@ -186,7 +186,7 @@ impl EnvBoxApp {
             let Some((k, v)) = line.split_once('=') else {
                 self.set_status(
                     StatusKind::Error,
-                    format!("保存失败：环境变量需要 KEY=VALUE，收到 {line:?}"),
+                    format!("Ошибка сохранения: переменная должна быть в виде KEY=VALUE, получено {line:?}"),
                 );
                 return Task::none();
             };
@@ -194,7 +194,7 @@ impl EnvBoxApp {
             if k.is_empty() {
                 self.set_status(
                     StatusKind::Error,
-                    format!("保存失败：环境变量键为空 {line:?}"),
+                    format!("Ошибка сохранения: пустое имя переменной {line:?}"),
                 );
                 return Task::none();
             }
@@ -222,13 +222,13 @@ impl EnvBoxApp {
             },
         };
         if let Err(err) = validate_profile(&profile) {
-            self.set_status(StatusKind::Error, format!("保存失败: {err}"));
+            self.set_status(StatusKind::Error, format!("Ошибка сохранения: {err}"));
             return Task::none();
         }
         let mut doc = match self.store.load_profiles() {
             Ok(doc) => doc,
             Err(err) => {
-                self.set_status(StatusKind::Error, format!("读取配置失败：{err}"));
+                self.set_status(StatusKind::Error, format!("Не удалось прочитать настройки: {err}"));
                 return Task::none();
             }
         };
@@ -248,7 +248,7 @@ impl EnvBoxApp {
                 self.profile_edit_mode = false;
                 self.bind_profile_scope();
                 if self.workspaces.error.is_none() {
-                    self.set_status(StatusKind::Success, "环境配置已保存");
+                    self.set_status(StatusKind::Success, "Профиль сохранён");
                 }
                 if self.resume_new_app {
                     self.resume_new_app = false;
@@ -256,20 +256,20 @@ impl EnvBoxApp {
                 }
                 return Task::none();
             }
-            Err(err) => self.set_status(StatusKind::Error, format!("保存失败: {err}")),
+            Err(err) => self.set_status(StatusKind::Error, format!("Ошибка сохранения: {err}")),
         }
         Task::none()
     }
 
     pub(super) fn delete_profile(&mut self) -> Task<Message> {
         let Some(id) = self.profile_draft.id else {
-            self.set_status(StatusKind::Error, "请先选择环境配置");
+            self.set_status(StatusKind::Error, "Сначала выберите профиль");
             return Task::none();
         };
         if self.workspace_management.pending_belongs_to_profile(id) {
             self.set_status(
                 StatusKind::Error,
-                "此环境配置的启动结果尚未知；请先查询原实例，再删除配置",
+                "Результат запуска с этим профилем неизвестен; узнайте состояние исходного экземпляра, затем удаляйте профиль",
             );
             return Task::none();
         }
@@ -281,14 +281,14 @@ impl EnvBoxApp {
         if in_use > 0 {
             self.set_status(
                 StatusKind::Error,
-                format!("有 {in_use} 个应用使用此环境配置，请先更改这些应用的默认环境"),
+                format!("Этот профиль используют приложения ({in_use}); сначала смените им профиль по умолчанию"),
             );
             return Task::none();
         }
         let mut doc = match self.store.load_profiles() {
             Ok(doc) => doc,
             Err(error) => {
-                self.set_status(StatusKind::Error, format!("读取配置失败：{error}"));
+                self.set_status(StatusKind::Error, format!("Не удалось прочитать настройки: {error}"));
                 return Task::none();
             }
         };
@@ -304,9 +304,9 @@ impl EnvBoxApp {
                     self.profile_edit_mode = false;
                     self.workspaces.clear(Uuid::nil());
                 }
-                self.set_status(StatusKind::Success, "环境配置已删除");
+                self.set_status(StatusKind::Success, "Профиль удалён");
             }
-            Err(err) => self.set_status(StatusKind::Error, format!("删除失败: {err}")),
+            Err(err) => self.set_status(StatusKind::Error, format!("Ошибка удаления: {err}")),
         }
         Task::none()
     }

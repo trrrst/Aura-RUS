@@ -122,7 +122,7 @@ impl BrowserProxy {
                 }));
         if self.port == 0 || !valid {
             return Err(crate::DomainError::InvalidProfile(
-                "代理需要有效的 IPv4、IPv6 或域名及 1–65535 端口；不支持网址、路径和认证信息"
+                "Для прокси нужен корректный IPv4, IPv6 или домен и порт 1–65535; URL, пути и данные авторизации не поддерживаются"
                     .into(),
             ));
         }

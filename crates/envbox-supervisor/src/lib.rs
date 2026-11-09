@@ -13,10 +13,10 @@ pub const ENTRY_CHROME_COMPATIBILITY: &str = "chrome_compatibility_root_runtime"
 
 pub fn entry_guarantee_label(guarantee: &str) -> &str {
     match guarantee {
-        ENTRY_CHROME_COMPATIBILITY => "Chrome 兼容启动：根进程 Runtime 已核验，未启用入口门禁",
-        "verified_pe_entry_no_tls" => "已核验 EXE 入口门禁（不含 TLS 回调）",
-        "pending" => "等待核验",
-        "unverified" => "未核验",
+        ENTRY_CHROME_COMPATIBILITY => "Совместимый запуск Chrome: Runtime корневого процесса проверен, контроль точки входа не включён",
+        "verified_pe_entry_no_tls" => "Контроль точки входа EXE проверен (без TLS-колбэков)",
+        "pending" => "Ожидает проверки",
+        "unverified" => "Не проверено",
         other => other,
     }
 }

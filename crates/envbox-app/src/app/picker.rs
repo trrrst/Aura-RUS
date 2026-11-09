@@ -156,7 +156,7 @@ impl EnvBoxApp {
     /// Fill `app_draft` from the selected discovered entry.
     pub(super) fn apply_picker_selection(&mut self) -> Task<Message> {
         let Some(idx) = self.app_picker.as_ref().and_then(|p| p.selected) else {
-            self.set_status(StatusKind::Error, "请先在列表中选择一个应用");
+            self.set_status(StatusKind::Error, "Сначала выберите приложение в списке");
             return Task::none();
         };
         let Some(item) = self
@@ -164,7 +164,7 @@ impl EnvBoxApp {
             .as_ref()
             .and_then(|p| p.items.get(idx).cloned())
         else {
-            self.set_status(StatusKind::Error, "选择的应用无效");
+            self.set_status(StatusKind::Error, "Выбрано недопустимое приложение");
             return Task::none();
         };
 
@@ -204,19 +204,19 @@ impl EnvBoxApp {
             crate::package::InjectionSupport::Supported => {
                 self.set_status(
                     StatusKind::Success,
-                    format!("已带入「{}」，请确认默认环境后保存", item.name),
+                    format!("Добавлено «{}»; проверьте профиль по умолчанию и сохраните", item.name),
                 );
             }
             crate::package::InjectionSupport::Delayed => {
                 self.set_status(
                     StatusKind::Info,
-                    format!("已带入「{}」。{}", item.name, cap.user_explanation()),
+                    format!("Добавлено «{}». {}", item.name, cap.user_explanation()),
                 );
             }
             crate::package::InjectionSupport::Unsupported => {
                 self.set_status(
                     StatusKind::Info,
-                    format!("已带入「{}」。{}", item.name, cap.user_explanation()),
+                    format!("Добавлено «{}». {}", item.name, cap.user_explanation()),
                 );
             }
         }

@@ -30,7 +30,7 @@ impl EnvBoxApp {
             async move {
                 receiver
                     .await
-                    .unwrap_or_else(|_| Err("查询失败：后台请求已结束，请重试".into()))
+                    .unwrap_or_else(|_| Err("Ошибка запроса: фоновый запрос завершился, повторите".into()))
             },
             move |result| Message::TimezoneResult(generation, result),
         )

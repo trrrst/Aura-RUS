@@ -23,7 +23,7 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     let selected_app = selected.and_then(|id| app.applications.iter().find(|a| a.id == id));
 
     let app_name = if app.app_draft.name.is_empty() {
-        "未选择应用"
+        "Приложение не выбрано"
     } else {
         app.app_draft.name.as_str()
     };
@@ -58,9 +58,9 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     let header_status = row![
         status_dot(if running { SUCCESS } else { FAINT }),
         text(if running {
-            format!("运行中 · {running_count} 个实例")
+            format!("Работает · экземпляров: {running_count}")
         } else {
-            "未运行".to_string()
+            "Не запущено".to_string()
         })
         .size(TEXT_CAPTION)
         .color(if running { SUCCESS } else { MUTED })
@@ -74,7 +74,7 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
             button(
                 row![
                     icon(Icon::Play, INK, 11.0),
-                    text("启动")
+                    text("Запустить")
                         .size(TEXT_BODY)
                         .color(INK)
                         .font(font::name_font()),
@@ -92,7 +92,7 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
             run_button
         } else {
             row![
-                button(text("编辑").size(TEXT_BODY).font(font::ui_font()))
+                button(text("Изменить").size(TEXT_BODY).font(font::ui_font()))
                     .padding(Padding::from([8, 10]))
                     .style(secondary_btn)
                     .on_press(Message::AppEdit),
@@ -103,7 +103,7 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
             .into()
         }
     } else {
-        container(text("新建应用").size(TEXT_BODY).color(ACCENT_TEXT)).into()
+        container(text("Новое приложение").size(TEXT_BODY).color(ACCENT_TEXT)).into()
     };
 
     let can_open_location = selected_app
@@ -113,7 +113,7 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
         button(
             row![
                 icon(Icon::ExternalLink, MUTED, 12.0),
-                text("打开位置")
+                text("Открыть расположение")
                     .size(TEXT_BODY)
                     .color(INK_2)
                     .font(font::ui_font()),
@@ -159,7 +159,7 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     }
     if running {
         header = header.push(
-            button(text("查看运行实例").size(TEXT_BODY).font(font::ui_font()))
+            button(text("Экземпляры").size(TEXT_BODY).font(font::ui_font()))
                 .style(secondary_btn)
                 .on_press(Message::InstanceFilter(selected)),
         );
@@ -214,13 +214,13 @@ fn run_selector<'a>(
         })
         .collect();
     choices.push(RunChoice {
-        label: "在本机直接运行".into(),
+        label: "Запустить без профиля".into(),
         profile_id: None,
     });
     pick_list(choices, None::<RunChoice>, move |choice| {
         Message::AppRunWithId(id, choice.profile_id)
     })
-    .placeholder("其他方式")
+    .placeholder("Другие способы")
     .style(pick_style)
     .menu_style(pick_menu)
     .padding(Padding::from([5, 8]))
@@ -237,11 +237,11 @@ fn app_overview<'a>(
     let Some(id) = app.app_draft.id else {
         return container(
             column![
-                text("还没有选择应用")
+                text("Приложение не выбрано")
                     .size(TEXT_SECTION)
                     .color(INK)
                     .font(font::name_font()),
-                text("从左侧选择应用，或点击“添加应用”创建一个新的启动项。")
+                text("Выберите приложение слева или нажмите «Добавить приложение».")
                     .size(TEXT_CAPTION)
                     .color(MUTED)
                     .font(font::ui_font()),
@@ -259,8 +259,8 @@ fn app_overview<'a>(
         .map(|a| launch_target_label(&a.launch))
         .unwrap_or_else(|| launch_kind_label(app.app_draft.kind).into());
     let mut settings = column![
-        kv_row("默认环境", &profile_name),
-        kv_row("启动方式", &launch),
+        kv_row("Профиль по умолчанию", &profile_name),
+        kv_row("Способ запуска", &launch),
     ]
     .spacing(7);
     if let Some(selected_app) = selected_app {
@@ -270,7 +270,7 @@ fn app_overview<'a>(
     }
 
     let mut content = column![
-        section_title("启动设置", "运行时使用已保存的设置"),
+        section_title("Параметры запуска", "При запуске используются сохранённые настройки"),
         container(settings.padding(10))
             .width(Fill)
             .style(inner_card_style),
@@ -281,7 +281,7 @@ fn app_overview<'a>(
             button(
                 row![
                     icon(Icon::ExternalLink, INK_2, 12.0),
-                    text("创建桌面快捷方式")
+                    text("Создать ярлык на рабочем столе")
                         .size(TEXT_BODY)
                         .font(font::ui_font()),
                 ]
@@ -301,18 +301,18 @@ fn app_overview<'a>(
     }
     if let Some(application) = selected_app.filter(|value| value.supports_chrome_data()) {
         content = content.push(kv_row(
-            "浏览器数据",
+            "Данные браузера",
             if application.chrome_independent_data {
-                "按应用与环境独立保存"
+                "Отдельно для приложения и профиля"
             } else {
-                "沿用启动参数 / Chrome 默认目录"
+                "Из параметров запуска / каталог Chrome по умолчанию"
             },
         ));
         let choices: Vec<_> = app
             .profiles
             .iter()
             .map(|profile| (Some(profile.id), profile.name.clone()))
-            .chain(std::iter::once((None, "本机 Host".into())))
+            .chain(std::iter::once((None, "Локальный хост".into())))
             .flat_map(|(profile_id, label)| {
                 envbox_core::DetectionSite::ALL
                     .into_iter()
@@ -325,7 +325,7 @@ fn app_overview<'a>(
             .collect();
         content = content.push(
             text(format!(
-                "默认环境：{}",
+                "Профиль по умолчанию: {}",
                 app.profile_name(application.default_profile_id)
             ))
             .size(TEXT_CAPTION)
@@ -335,7 +335,7 @@ fn app_overview<'a>(
             pick_list(choices, None::<DetectionChoice>, move |choice| {
                 Message::AppDetect(id, choice.profile_id, choice.site)
             })
-            .placeholder("选择环境并打开检测页")
+            .placeholder("Выбрать профиль и открыть страницу проверки")
             .style(pick_style)
             .menu_style(pick_menu)
             .padding(Padding::from([7, 8]))
@@ -347,7 +347,7 @@ fn app_overview<'a>(
     if selected_app.is_some_and(crate::package::chromium_renderer_sandbox_limited) {
         content = content.push(
             container(
-                text("Chrome / Edge 新建浏览器进程时会按配置设置网页语言；复用已运行的浏览器需重启。网页沙箱中的原生系统信息仍可能显示本机值。")
+                text("При запуске нового процесса Chrome / Edge язык веб-страниц задаётся по профилю; уже открытый браузер нужно перезапустить. В песочнице страниц системные сведения всё ещё могут показывать реальные значения.")
                     .size(TEXT_CAPTION)
                     .color(ACCENT_TEXT)
                     .font(font::ui_font()),
@@ -382,9 +382,9 @@ impl std::fmt::Display for LaunchKindChoice {
 
 fn launch_kind_label(kind: LaunchKind) -> &'static str {
     match kind {
-        LaunchKind::Command => "命令行",
-        LaunchKind::Executable => "可执行文件",
-        LaunchKind::Packaged => "Windows 应用包",
+        LaunchKind::Command => "Командная строка",
+        LaunchKind::Executable => "Исполняемый файл",
+        LaunchKind::Packaged => "Пакет приложения Windows",
     }
 }
 
@@ -394,8 +394,8 @@ struct ConsoleHostChoice(ConsoleHost);
 impl std::fmt::Display for ConsoleHostChoice {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self.0 {
-            ConsoleHost::Direct => "直接启动",
-            ConsoleHost::Cmd => "命令提示符",
+            ConsoleHost::Direct => "Прямой запуск",
+            ConsoleHost::Cmd => "Командная строка",
             ConsoleHost::PowerShell => "Windows PowerShell",
             ConsoleHost::PowerShell7 => "PowerShell 7",
             ConsoleHost::WindowsTerminal => "Windows Terminal",
@@ -417,14 +417,14 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
         .find(|n| n.id == app.app_draft.profile_id)
         .cloned();
     let (target_label, target_placeholder) = match app.app_draft.kind {
-        LaunchKind::Command => ("启动命令", "命令名称或完整命令行"),
-        LaunchKind::Executable => ("程序路径", "可执行文件的完整路径"),
-        LaunchKind::Packaged => ("应用标识", "Windows 应用的 AUMID"),
+        LaunchKind::Command => ("Команда запуска", "Имя команды или полная командная строка"),
+        LaunchKind::Executable => ("Путь к программе", "Полный путь к исполняемому файлу"),
+        LaunchKind::Packaged => ("Идентификатор приложения", "AUMID приложения Windows"),
     };
     let mut basic = column![
         form_field(
-            "应用名称",
-            text_input("应用名称", &app.app_draft.name)
+            "Название приложения",
+            text_input("Название приложения", &app.app_draft.name)
                 .on_input(Message::AppName)
                 .padding(Padding::from([8, 10]))
                 .size(TEXT_BODY)
@@ -432,7 +432,7 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
                 .font(font::ui_font()),
         ),
         form_field(
-            "启动方式",
+            "Способ запуска",
             pick_list(
                 LaunchKind::ALL.map(LaunchKindChoice),
                 Some(LaunchKindChoice(app.app_draft.kind)),
@@ -463,7 +463,7 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
         || app.app_draft.console_host != ConsoleHost::Direct
     {
         basic = basic.push(form_field(
-            "终端宿主",
+            "Терминал",
             pick_list(
                 ConsoleHost::ALL.map(ConsoleHostChoice),
                 Some(ConsoleHostChoice(app.app_draft.console_host)),
@@ -481,14 +481,14 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
         && app.app_draft.kind != LaunchKind::Command
     {
         basic = basic.push(
-            text("终端宿主仅适用于命令行，请切换启动方式或选择直接启动。")
+            text("Выбор терминала доступен только для команд; смените способ запуска или выберите прямой запуск.")
                 .size(TEXT_CAPTION)
                 .color(DANGER_TEXT)
                 .font(font::ui_font()),
         );
     } else if app.app_draft.console_host == ConsoleHost::WindowsTerminal {
         basic = basic.push(
-            text("保存后，命令将在 Windows Terminal 中启动。")
+            text("После сохранения команда будет запускаться в Windows Terminal.")
                 .size(TEXT_CAPTION)
                 .color(MUTED)
                 .font(font::ui_font()),
@@ -496,7 +496,7 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
     }
 
     let mut environment = column![form_field(
-        "默认环境",
+        "Профиль по умолчанию",
         pick_list(profile_labels, selected_profile, |n: NamedId| {
             Message::AppProfile(n.id)
         })
@@ -516,7 +516,7 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
         environment = environment
             .push(
                 row![
-                    text("独立浏览器数据目录")
+                    text("Отдельный каталог данных браузера")
                         .size(TEXT_BODY)
                         .color(INK_2)
                         .font(font::ui_font())
@@ -530,7 +530,7 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
                 .align_y(Alignment::Center),
             )
             .push(
-                text("按应用和环境分别保存，不复制原有登录和书签。profile-directory 选择此目录内的子配置。")
+                text("Хранится отдельно для каждого приложения и профиля; существующие входы и закладки не копируются. profile-directory выбирает вложенный профиль внутри этого каталога.")
                     .size(TEXT_CAPTION)
                     .color(MUTED)
                     .font(font::ui_font()),
@@ -539,7 +539,7 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
 
     let advanced_toggle = button(
         row![
-            text("更多启动选项")
+            text("Дополнительные параметры запуска")
                 .size(TEXT_SECTION)
                 .color(INK_2)
                 .font(font::name_font())
@@ -564,7 +564,7 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
     let mut advanced = column![advanced_toggle].spacing(FORM_SPACING);
     if app.app_advanced {
         let workdir_input = row![
-            text_input("留空则使用程序默认目录", &app.app_draft.work_dir)
+            text_input("Пусто — каталог программы по умолчанию", &app.app_draft.work_dir)
                 .on_input(Message::AppWorkDir)
                 .padding(Padding::from([8, 10]))
                 .size(TEXT_BODY)
@@ -580,18 +580,18 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
         .align_y(Alignment::Center);
         advanced = advanced
             .push(form_field(
-                "启动参数",
-                text_input("例如 --profile dev", &app.app_draft.args)
+                "Параметры запуска",
+                text_input("например, --profile dev", &app.app_draft.args)
                     .on_input(Message::AppArgs)
                     .padding(Padding::from([8, 10]))
                     .size(TEXT_BODY)
                     .style(input_style)
                     .font(font::ui_font()),
             ))
-            .push(form_field("工作目录", workdir_input))
+            .push(form_field("Рабочий каталог", workdir_input))
             .push(
                 row![
-                    text("子进程继续使用该环境")
+                    text("Дочерние процессы наследуют окружение")
                         .size(TEXT_BODY)
                         .color(INK_2)
                         .font(font::ui_font())
@@ -603,7 +603,7 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
             )
             .push(
                 row![
-                    text("记录环境读取审计")
+                    text("Вести аудит чтения окружения")
                         .size(TEXT_BODY)
                         .color(INK_2)
                         .font(font::ui_font())
@@ -617,7 +617,7 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
     let save = button(
         row![
             icon(Icon::Check, INK, 14.0),
-            text("保存")
+            text("Сохранить")
                 .size(TEXT_BODY)
                 .color(INK)
                 .font(font::name_font()),
@@ -630,7 +630,7 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
     .style(primary_btn)
     .on_press(Message::AppSave);
     let cancel = button(
-        text("取消")
+        text("Отмена")
             .size(TEXT_BODY)
             .color(INK_2)
             .font(font::ui_font()),
@@ -645,7 +645,7 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
     if app.app_draft.id.is_some() {
         actions = actions.push(
             button(
-                text("删除")
+                text("Удалить")
                     .size(TEXT_BODY)
                     .color(DANGER_TEXT)
                     .font(font::ui_font()),
@@ -657,12 +657,12 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
     }
 
     let content = column![
-        text("保存后用于下一次启动")
+        text("Применится при следующем запуске после сохранения")
             .size(TEXT_CAPTION)
             .color(MUTED)
             .font(font::ui_font()),
-        form_section("基本信息", basic),
-        form_section("环境与数据", environment),
+        form_section("Основное", basic),
+        form_section("Окружение и данные", environment),
         container(advanced)
             .padding(14)
             .width(Fill)
@@ -673,9 +673,9 @@ fn app_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message>) {
 }
 fn application_target(app: &envbox_core::Application) -> Option<(&'static str, String)> {
     match &app.launch {
-        envbox_core::LaunchTarget::Command { command } => Some(("命令", command.clone())),
+        envbox_core::LaunchTarget::Command { command } => Some(("Команда", command.clone())),
         envbox_core::LaunchTarget::Executable { path } => {
-            Some(("程序路径", path.display().to_string()))
+            Some(("Путь к программе", path.display().to_string()))
         }
         envbox_core::LaunchTarget::Packaged { .. } => None,
     }
@@ -683,9 +683,9 @@ fn application_target(app: &envbox_core::Application) -> Option<(&'static str, S
 
 fn launch_target_label(target: &envbox_core::LaunchTarget) -> String {
     match target {
-        envbox_core::LaunchTarget::Command { .. } => "命令行".into(),
-        envbox_core::LaunchTarget::Executable { .. } => "可执行文件".into(),
-        envbox_core::LaunchTarget::Packaged { .. } => "Windows 应用包".into(),
+        envbox_core::LaunchTarget::Command { .. } => "Командная строка".into(),
+        envbox_core::LaunchTarget::Executable { .. } => "Исполняемый файл".into(),
+        envbox_core::LaunchTarget::Packaged { .. } => "Пакет приложения Windows".into(),
     }
 }
 

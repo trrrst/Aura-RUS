@@ -28,15 +28,15 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     .on_press(Message::WindowCloseCancel);
 
     let mut content = column![
-        text("关闭 Aura")
+        text("Закрыть Aura")
             .size(TEXT_TITLE)
             .color(INK)
             .font(font::name_font()),
-        text("已启动的应用可以继续运行。你想如何处理 Aura 窗口？")
+        text("Запущенные приложения могут продолжить работу. Что сделать с окном Aura?")
             .size(TEXT_BODY)
             .color(INK_2)
             .font(font::ui_font()),
-        checkbox("记住我的选择，以后不再询问", app.remember_close_choice)
+        checkbox("Запомнить выбор и больше не спрашивать", app.remember_close_choice)
             .on_toggle(Message::WindowRememberChoice)
             .size(14)
             .text_size(TEXT_BODY),
@@ -54,7 +54,7 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     content = content.push(
         row![
             button(
-                text("取消")
+                text("Отмена")
                     .size(TEXT_BODY)
                     .color(MUTED)
                     .font(font::ui_font())
@@ -63,7 +63,7 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
             .padding(Padding::from([8, 14]))
             .style(secondary_btn),
             button(
-                text("退出 Aura")
+                text("Выйти из Aura")
                     .size(TEXT_BODY)
                     .color(INK)
                     .font(font::ui_font())
@@ -72,7 +72,7 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
             .padding(Padding::from([8, 14]))
             .style(danger_btn),
             button(
-                text("最小化到托盘")
+                text("Свернуть в трей")
                     .size(TEXT_BODY)
                     .color(INK)
                     .font(font::name_font())

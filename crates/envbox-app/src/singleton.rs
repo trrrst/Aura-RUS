@@ -83,13 +83,13 @@ pub fn claim() -> Result<Claim, String> {
                         break;
                     }
                 })
-                .map_err(|error| format!("无法启动 Aura 唤醒监听：{error}"))?;
+                .map_err(|error| format!("Не удалось запустить прослушивание сигнала пробуждения Aura: {error}"))?;
             RECEIVER
                 .set(Mutex::new(Some(receiver)))
-                .map_err(|_| "Aura 唤醒通道已初始化".to_string())?;
+                .map_err(|_| "Канал пробуждения Aura инициализирован".to_string())?;
             OWNER
                 .set(handles)
-                .map_err(|_| "Aura 单例已初始化".to_string())?;
+                .map_err(|_| "Единственный экземпляр Aura инициализирован".to_string())?;
             Ok(Claim::Primary)
         }
     }
@@ -100,16 +100,16 @@ fn claim_named(name: &str) -> Result<NamedClaim, String> {
     let event_name = wide(&format!("{name}.Event"));
     let event = unsafe { CreateEventW(None, false, false, PCWSTR(event_name.as_ptr())) }
         .map(OwnedHandle::new)
-        .map_err(|error| format!("创建 Aura 唤醒事件失败：{error}"))?;
+        .map_err(|error| format!("Не удалось создать событие пробуждения Aura: {error}"))?;
 
     let mutex_name = wide(&format!("{name}.Mutex"));
     let mutex = unsafe { CreateMutexW(None, false, PCWSTR(mutex_name.as_ptr())) }
         .map(OwnedHandle::new)
-        .map_err(|error| format!("创建 Aura 单例锁失败：{error}"))?;
+        .map_err(|error| format!("Не удалось создать блокировку единственного экземпляра Aura: {error}"))?;
     let already_running = unsafe { GetLastError() } == ERROR_ALREADY_EXISTS;
     if already_running {
         unsafe { SetEvent(event.get()) }
-            .map_err(|error| format!("通知已运行的 Aura 失败：{error}"))?;
+            .map_err(|error| format!("Не удалось уведомить уже запущенную Aura: {error}"))?;
         Ok(NamedClaim::AlreadyRunning)
     } else {
         Ok(NamedClaim::Primary(Handles {

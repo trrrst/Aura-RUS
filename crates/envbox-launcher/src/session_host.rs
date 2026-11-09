@@ -66,7 +66,7 @@ fn fail(error: impl std::fmt::Display) -> SessionError {
 fn helper_io_error(stage: &str, path: &Path, error: io::Error) -> SessionError {
     let hint = match error.raw_os_error() {
         Some(225 | 226) => {
-            "；Windows 安全软件阻止了会话辅助程序，请查看 Windows 安全中心的保护历史记录"
+            "; средство защиты Windows заблокировало вспомогательную программу сеанса — проверьте журнал защиты в «Безопасности Windows»"
         }
         _ => "",
     };
@@ -219,18 +219,18 @@ fn stage_helper(source: &Path) -> Result<PathBuf, SessionError> {
     use sha2::{Digest, Sha256};
     use std::io::Write;
     let bytes =
-        read_helper(source).map_err(|error| helper_io_error("读取会话辅助程序", source, error))?;
+        read_helper(source).map_err(|error| helper_io_error("чтение вспомогательной программы сеанса", source, error))?;
     let hash = format!("{:x}", Sha256::digest(&bytes));
     let base = std::env::var_os("LOCALAPPDATA")
         .map(PathBuf::from)
         .unwrap_or_else(std::env::temp_dir);
     let directory = base.join("com.aura.envbox").join("session-host").join(hash);
     std::fs::create_dir_all(&directory)
-        .map_err(|error| helper_io_error("创建会话辅助程序目录", &directory, error))?;
+        .map_err(|error| helper_io_error("создание каталога вспомогательной программы сеанса", &directory, error))?;
     let destination = directory.join("envbox-broker.exe");
     if destination.exists() {
         if !helper_matches(&destination, &bytes)
-            .map_err(|error| helper_io_error("读取缓存会话辅助程序", &destination, error))?
+            .map_err(|error| helper_io_error("чтение кэшированной вспомогательной программы сеанса", &destination, error))?
         {
             return Err(fail(format!(
                 "cached session helper fingerprint mismatch: {}",
@@ -245,21 +245,21 @@ fn stage_helper(source: &Path) -> Result<PathBuf, SessionError> {
             .write(true)
             .create_new(true)
             .open(&temporary)
-            .map_err(|error| helper_io_error("创建会话辅助程序", &temporary, error))?;
+            .map_err(|error| helper_io_error("создание вспомогательной программы сеанса", &temporary, error))?;
         file.write_all(&bytes)
-            .map_err(|error| helper_io_error("写入会话辅助程序", &temporary, error))?;
+            .map_err(|error| helper_io_error("запись вспомогательной программы сеанса", &temporary, error))?;
         file.sync_all()
-            .map_err(|error| helper_io_error("同步会话辅助程序", &temporary, error))?;
+            .map_err(|error| helper_io_error("синхронизация вспомогательной программы сеанса", &temporary, error))?;
         drop(file);
         // Windows rename never overwrites an existing, possibly running helper.
         // A concurrent publisher is accepted only after checking its content.
         if let Err(error) = std::fs::rename(&temporary, &destination) {
             if !destination.exists() {
-                return Err(helper_io_error("保存会话辅助程序", &destination, error));
+                return Err(helper_io_error("сохранение вспомогательной программы сеанса", &destination, error));
             }
         }
         if !helper_matches(&destination, &bytes)
-            .map_err(|error| helper_io_error("校验会话辅助程序", &destination, error))?
+            .map_err(|error| helper_io_error("проверка вспомогательной программы сеанса", &destination, error))?
         {
             return Err(fail(format!(
                 "staged session helper fingerprint mismatch: {}",
@@ -421,7 +421,7 @@ fn start_impl(
     command.creation_flags(CREATE_NO_WINDOW.0);
     let mut helper = command
         .spawn()
-        .map_err(|error| helper_io_error("启动会话辅助程序", &executable, error))?;
+        .map_err(|error| helper_io_error("запуск вспомогательной программы сеанса", &executable, error))?;
     let deadline = Instant::now() + STARTUP_TIMEOUT;
     let result = (|| {
         loop {
@@ -434,7 +434,7 @@ fn start_impl(
             }
             if let Some(status) = helper
                 .try_wait()
-                .map_err(|error| helper_io_error("查询会话辅助程序", &executable, error))?
+                .map_err(|error| helper_io_error("опрос вспомогательной программы сеанса", &executable, error))?
             {
                 return Err(fail(format!(
                     "helper exited before startup: {} ({status})",
@@ -501,11 +501,11 @@ fn start_impl(
     let result = result.map_err(|error| {
         let status = match helper.try_wait() {
             Ok(Some(status)) => status.to_string(),
-            Ok(None) => "仍在运行".to_owned(),
-            Err(query_error) => format!("无法读取退出状态: {query_error}"),
+            Ok(None) => "ещё выполняется".to_owned(),
+            Err(query_error) => format!("Не удалось прочитать код завершения: {query_error}"),
         };
         fail(format!(
-            "会话启动失败；辅助程序={}；PID={}；状态={status}；{error}",
+            "Не удалось запустить сеанс; вспомогательная программа={}; PID={}; состояние={status}; {error}",
             executable.display(),
             helper.id()
         ))

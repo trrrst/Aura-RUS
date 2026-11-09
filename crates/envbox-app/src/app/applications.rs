@@ -52,7 +52,7 @@ impl EnvBoxApp {
         if self.profiles.is_empty() {
             self.resume_new_app = true;
             self.begin_new_profile();
-            self.set_status(StatusKind::Info, "先创建环境配置，保存后继续添加应用");
+            self.set_status(StatusKind::Info, "Сначала создайте профиль окружения, сохраните его и затем добавляйте приложения");
             return Task::none();
         }
         self.nav = Nav::Apps;
@@ -84,7 +84,7 @@ impl EnvBoxApp {
 
     pub(super) fn save_app(&mut self) -> Task<Message> {
         if self.profiles.is_empty() {
-            self.set_status(StatusKind::Error, "保存失败：请先创建环境配置");
+            self.set_status(StatusKind::Error, "Ошибка сохранения: сначала создайте профиль окружения");
             return Task::none();
         }
         if !self
@@ -92,7 +92,7 @@ impl EnvBoxApp {
             .iter()
             .any(|p| p.id == self.app_draft.profile_id)
         {
-            self.set_status(StatusKind::Error, "保存失败：默认环境配置不存在");
+            self.set_status(StatusKind::Error, "Ошибка сохранения: профиль по умолчанию не найден");
             return Task::none();
         }
         // AUMID / shell:AppsFolder / WindowsApps / execution-alias paths must
@@ -126,7 +126,7 @@ impl EnvBoxApp {
             audit: self.app_draft.audit,
         };
         if let Err(err) = validate_application(&app) {
-            self.set_status(StatusKind::Error, format!("保存失败: {err}"));
+            self.set_status(StatusKind::Error, format!("Ошибка сохранения: {err}"));
             return Task::none();
         }
         let mut doc = self.store.load_applications().unwrap_or_default();
@@ -143,17 +143,17 @@ impl EnvBoxApp {
                 self.app_edit_mode = false;
                 self.app_capabilities
                     .insert(app.id, capability_for_app(&app));
-                self.set_status(StatusKind::Success, "应用已保存");
+                self.set_status(StatusKind::Success, "Приложение сохранено");
                 return self.refresh_app_icons();
             }
-            Err(err) => self.set_status(StatusKind::Error, format!("保存失败: {err}")),
+            Err(err) => self.set_status(StatusKind::Error, format!("Ошибка сохранения: {err}")),
         }
         Task::none()
     }
 
     pub(super) fn delete_app(&mut self) -> Task<Message> {
         let Some(id) = self.app_draft.id else {
-            self.set_status(StatusKind::Error, "请先选择应用");
+            self.set_status(StatusKind::Error, "Сначала выберите приложение");
             return Task::none();
         };
         let mut doc = self.store.load_applications().unwrap_or_default();
@@ -174,9 +174,9 @@ impl EnvBoxApp {
                     self.app_saved_draft = self.app_draft.clone();
                     self.app_edit_mode = false;
                 }
-                self.set_status(StatusKind::Success, "应用已删除");
+                self.set_status(StatusKind::Success, "Приложение удалено");
             }
-            Err(err) => self.set_status(StatusKind::Error, format!("删除失败: {err}")),
+            Err(err) => self.set_status(StatusKind::Error, format!("Ошибка удаления: {err}")),
         }
         Task::none()
     }
@@ -205,11 +205,11 @@ impl EnvBoxApp {
         detection: Option<envbox_core::DetectionSite>,
     ) -> Task<Message> {
         if self.update_checking {
-            self.set_status(StatusKind::Info, "更新正在进行，请完成后再启动应用");
+            self.set_status(StatusKind::Info, "Идёт обновление; запускайте приложение после его окончания");
             return Task::none();
         }
         let Some(app) = self.applications.iter().find(|a| a.id == app_id).cloned() else {
-            self.set_status(StatusKind::Error, "应用不存在");
+            self.set_status(StatusKind::Error, "Приложение не найдено");
             return Task::none();
         };
         if !matches!(sel, RunSelection::Host) {
@@ -218,7 +218,7 @@ impl EnvBoxApp {
                     self.set_status(
                         StatusKind::Error,
                         format!(
-                            "「{}」无法使用环境配置启动。{}",
+                            "«{}» нельзя запустить с профилем окружения. {}",
                             app.name,
                             capability.user_explanation()
                         ),
@@ -236,28 +236,28 @@ impl EnvBoxApp {
                     .find(|p| p.id == app.default_profile_id)
                     .cloned()
                 else {
-                    self.set_status(StatusKind::Error, "环境配置不存在");
+                    self.set_status(StatusKind::Error, "Профиль не найден");
                     return Task::none();
                 };
                 RunTarget::Profile(profile)
             }
             RunSelection::Profile(id) => {
                 let Some(profile) = self.profiles.iter().find(|p| p.id == id).cloned() else {
-                    self.set_status(StatusKind::Error, "环境配置不存在");
+                    self.set_status(StatusKind::Error, "Профиль не найден");
                     return Task::none();
                 };
                 RunTarget::Profile(profile)
             }
         };
         let environment = match &target {
-            RunTarget::Host => "本机 Host".into(),
+            RunTarget::Host => "Локальный хост".into(),
             RunTarget::Profile(profile) => profile.name.clone(),
         };
         let request = Uuid::new_v4();
         self.pending_launches.insert(request);
         self.set_status(
             StatusKind::Info,
-            format!("正在使用 {environment} 启动「{}」…", app.name),
+            format!("Запуск «{}» с профилем {environment}…", app.name),
         );
         Task::perform(
             async move {
@@ -270,10 +270,10 @@ impl EnvBoxApp {
                                 .map_err(|error| error.to_string());
                         let _ = sender.send(result);
                     });
-                worker.map_err(|error| format!("无法启动应用任务：{error}"))?;
+                worker.map_err(|error| format!("Не удалось начать запуск приложения: {error}"))?;
                 receiver
                     .await
-                    .map_err(|_| "应用启动任务意外结束".to_string())?
+                    .map_err(|_| "Запуск приложения неожиданно прервался".to_string())?
             },
             move |result| {
                 Message::AppLaunchFinished(request, environment.clone(), detection, result)
@@ -299,13 +299,13 @@ impl EnvBoxApp {
                 self.set_status(
                     StatusKind::Success,
                     if let Some(site) = detection {
-                        format!("已在 {environment} 打开 {site}（实例 {id}）")
+                        format!("{site} открыт с профилем {environment} (экземпляр {id})")
                     } else {
-                        format!("已启动实例 {id}")
+                        format!("Экземпляр {id} запущен")
                     },
                 );
             }
-            Err(err) => self.set_status(StatusKind::Error, format!("启动失败: {err}")),
+            Err(err) => self.set_status(StatusKind::Error, format!("Ошибка запуска: {err}")),
         }
         Task::none()
     }
@@ -317,7 +317,7 @@ impl EnvBoxApp {
             .find(|app| app.id == app_id)
             .cloned()
         else {
-            self.set_status(StatusKind::Error, "请先保存应用");
+            self.set_status(StatusKind::Error, "Сначала сохраните приложение");
             return Task::none();
         };
         let root = self.store.root().to_path_buf();
@@ -334,7 +334,7 @@ impl EnvBoxApp {
                 });
                 receiver
                     .await
-                    .unwrap_or_else(|_| Err("快捷方式创建任务意外结束".into()))
+                    .unwrap_or_else(|_| Err("Создание ярлыка неожиданно прервалось".into()))
             },
             Message::AppDesktopShortcutCreated,
         )
@@ -342,22 +342,22 @@ impl EnvBoxApp {
 
     pub(super) fn open_app_location(&mut self, app_id: Uuid) {
         let Some(app) = self.applications.iter().find(|app| app.id == app_id) else {
-            self.set_status(StatusKind::Error, "应用不存在");
+            self.set_status(StatusKind::Error, "Приложение не найдено");
             return;
         };
         let LaunchTarget::Executable { path } = &app.launch else {
-            self.set_status(StatusKind::Info, "此启动方式没有可打开的程序文件位置");
+            self.set_status(StatusKind::Info, "У этого способа запуска нет файла программы, расположение которого можно открыть");
             return;
         };
         let Some(folder) = path.parent().filter(|parent| parent.is_dir()) else {
-            self.set_status(StatusKind::Error, "程序所在目录不存在");
+            self.set_status(StatusKind::Error, "Каталог программы не существует");
             return;
         };
         if let Err(err) = std::process::Command::new("explorer.exe")
             .arg(folder)
             .spawn()
         {
-            self.set_status(StatusKind::Error, format!("打开程序位置失败：{err}"));
+            self.set_status(StatusKind::Error, format!("Не удалось открыть расположение программы: {err}"));
         }
     }
 }

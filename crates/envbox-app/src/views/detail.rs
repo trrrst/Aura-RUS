@@ -19,7 +19,7 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     match app.nav {
         Nav::Apps => app::view(app),
         Nav::Profiles => profile::view(app),
-        _ => container(column![text("详情").size(TEXT_SECTION).color(MUTED)])
+        _ => container(column![text("Подробности").size(TEXT_SECTION).color(MUTED)])
             .padding(18)
             .width(Length::Fixed(360.0))
             .height(Fill)

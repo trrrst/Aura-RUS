@@ -18,7 +18,7 @@ impl EnvBoxApp {
         self.update_checking = true;
         self.update_status = None;
         self.update_asset = None;
-        self.set_status(StatusKind::Info, "正在检查 GitHub 最新版本…");
+        self.set_status(StatusKind::Info, "Проверка последней версии на GitHub…");
         Task::perform(
             worker_task(|| updater::check_latest(PRODUCT_VERSION)),
             Message::UpdateResult,
@@ -38,13 +38,13 @@ impl EnvBoxApp {
         };
         match &result {
             Ok(CheckResult::UpToDate) => {
-                self.set_status(StatusKind::Success, "当前已经是最新版本");
+                self.set_status(StatusKind::Success, "Установлена последняя версия");
             }
             Ok(CheckResult::Available {
                 tag,
                 installer: Some(_),
             }) => {
-                self.set_status(StatusKind::Info, format!("发现新版本 {tag}，可下载并安装"));
+                self.set_status(StatusKind::Info, format!("Доступна новая версия {tag}, можно скачать и установить"));
             }
             Ok(CheckResult::Available {
                 tag,
@@ -52,10 +52,10 @@ impl EnvBoxApp {
             }) => {
                 self.set_status(
                     StatusKind::Info,
-                    format!("发现新版本 {tag}，但缺少可验证的官方安装包"),
+                    format!("Доступна новая версия {tag}, но нет проверяемого официального установщика"),
                 );
             }
-            Err(error) => self.set_status(StatusKind::Error, format!("更新检查失败：{error}")),
+            Err(error) => self.set_status(StatusKind::Error, format!("Ошибка проверки обновлений: {error}")),
         }
         Task::none()
     }
@@ -67,7 +67,7 @@ impl EnvBoxApp {
         if self.has_unsaved_edits() {
             self.set_status(
                 StatusKind::Error,
-                "请先保存或放弃未保存修改，再安装 Aura 更新",
+                "Сохраните или отмените изменения, затем устанавливайте обновление Aura",
             );
             return Task::none();
         }
@@ -76,12 +76,12 @@ impl EnvBoxApp {
             return self.start_pending_installer();
         }
         let Some(asset) = self.update_asset.clone() else {
-            self.set_status(StatusKind::Error, "没有可验证的更新安装包，请先检查更新");
+            self.set_status(StatusKind::Error, "Нет проверенного установщика обновления; сначала проверьте обновления");
             return Task::none();
         };
 
         self.update_checking = true;
-        self.set_status(StatusKind::Info, "正在下载并校验官方安装包…");
+        self.set_status(StatusKind::Info, "Загрузка и проверка официального установщика…");
         Task::perform(
             worker_task(move || updater::download_verified(&asset)),
             Message::UpdateDownloadResult,
@@ -99,7 +99,7 @@ impl EnvBoxApp {
                 if self.has_unsaved_edits() {
                     self.set_status(
                         StatusKind::Error,
-                        "安装包已校验，但检测到未保存修改；保存或放弃后再点击安装",
+                        "Установщик проверен, но есть несохранённые изменения; сохраните или отмените их и нажмите «Установить»",
                     );
                     Task::none()
                 } else {
@@ -107,7 +107,7 @@ impl EnvBoxApp {
                 }
             }
             Err(error) => {
-                self.set_status(StatusKind::Error, format!("更新下载失败：{error}"));
+                self.set_status(StatusKind::Error, format!("Ошибка загрузки обновления: {error}"));
                 Task::none()
             }
         }
@@ -115,11 +115,11 @@ impl EnvBoxApp {
 
     fn start_pending_installer(&mut self) -> Task<Message> {
         if !self.pending_launches.is_empty() {
-            self.set_status(StatusKind::Info, "应用正在启动，请启动完成后再安装更新");
+            self.set_status(StatusKind::Info, "Приложение запускается; устанавливайте обновление после окончания запуска");
             return Task::none();
         }
         if self.has_unsaved_edits() {
-            self.set_status(StatusKind::Error, "请先保存或放弃未保存修改，再启动安装器");
+            self.set_status(StatusKind::Error, "Сохраните или отмените изменения, затем запускайте установщик");
             return Task::none();
         }
         if !self.flush_pane_ratios() {
@@ -127,15 +127,15 @@ impl EnvBoxApp {
         }
 
         let Some(path) = self.update_installer_path.clone() else {
-            self.set_status(StatusKind::Error, "已校验的安装包不存在，请重新下载");
+            self.set_status(StatusKind::Error, "Проверенный установщик не найден, скачайте заново");
             return Task::none();
         };
         let Some(asset) = self.update_asset.clone() else {
-            self.set_status(StatusKind::Error, "更新摘要不存在，请重新检查更新");
+            self.set_status(StatusKind::Error, "Сведения об обновлении не найдены, проверьте обновления заново");
             return Task::none();
         };
         self.update_checking = true;
-        self.set_status(StatusKind::Info, "正在复核并启动官方安装器…");
+        self.set_status(StatusKind::Info, "Повторная проверка и запуск официального установщика…");
         Task::perform(
             worker_task(move || updater::verify_and_launch(&path, &asset)),
             Message::UpdateInstallResult,
@@ -157,7 +157,7 @@ impl EnvBoxApp {
                 // after the GUI exits, which preserves the existing close
                 // behavior contract.  Exit only after ShellExecute accepted
                 // the verified installer.
-                self.set_status(StatusKind::Success, "安装器已启动，Aura 即将退出");
+                self.set_status(StatusKind::Success, "Установщик запущен, Aura сейчас закроется");
                 self.flush_pane_ratios();
                 iced::exit()
             }
@@ -165,14 +165,14 @@ impl EnvBoxApp {
                 self.remove_pending_installer();
                 self.set_status(
                     StatusKind::Error,
-                    format!("安装包复核失败，已清理缓存，请重新下载：{error}"),
+                    format!("Повторная проверка установщика не пройдена, кэш очищен, скачайте заново: {error}"),
                 );
                 Task::none()
             }
             Err(updater::InstallError::Launch(error)) => {
                 self.set_status(
                     StatusKind::Error,
-                    format!("安装器启动失败，可重试：{error}"),
+                    format!("Не удалось запустить установщик, можно повторить: {error}"),
                 );
                 Task::none()
             }
@@ -183,7 +183,7 @@ impl EnvBoxApp {
         if let Err(error) = updater::open_url(updater::LATEST_RELEASE_URL) {
             self.set_status(
                 StatusKind::Error,
-                format!("打开 GitHub 发布页失败：{error}"),
+                format!("Не удалось открыть страницу релизов GitHub: {error}"),
             );
         }
         Task::none()
@@ -191,7 +191,7 @@ impl EnvBoxApp {
 
     pub(super) fn open_repository(&mut self) -> Task<Message> {
         if let Err(error) = updater::open_url(updater::REPOSITORY_URL) {
-            self.set_status(StatusKind::Error, format!("打开 Aura 仓库失败：{error}"));
+            self.set_status(StatusKind::Error, format!("Не удалось открыть репозиторий Aura: {error}"));
         }
         Task::none()
     }

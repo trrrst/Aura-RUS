@@ -418,7 +418,7 @@ impl EnvBoxApp {
             Message::Nav(n) => {
                 if n != self.nav {
                     if self.update_checking {
-                        self.set_status(StatusKind::Info, "更新正在进行，请等待完成后再切换页面");
+                        self.set_status(StatusKind::Info, "Идёт обновление, дождитесь его окончания перед переходом на другую страницу");
                         return Task::none();
                     }
                     return self.request_navigation(PendingNavigation::Nav(n));
@@ -520,7 +520,7 @@ impl EnvBoxApp {
                 if let Some(p) = self.app_picker.as_mut() {
                     p.selected = first;
                 }
-                self.set_status(StatusKind::Info, format!("已发现 {n} 个本机入口"));
+                self.set_status(StatusKind::Info, format!("Найдено точек запуска на компьютере: {n}"));
                 return self.extract_picker_icons();
             }
             Message::AppPickerIcons(pairs) => {
@@ -616,9 +616,9 @@ impl EnvBoxApp {
             Message::AppDesktopShortcutCreated(result) => match result {
                 Ok(path) => self.set_status(
                     StatusKind::Success,
-                    format!("已创建桌面快捷方式：{}", path.display()),
+                    format!("Ярлык на рабочем столе создан: {}", path.display()),
                 ),
-                Err(error) => self.set_status(StatusKind::Error, format!("创建失败：{error}")),
+                Err(error) => self.set_status(StatusKind::Error, format!("Не удалось создать: {error}")),
             },
             Message::AppRunId(id) => return self.run_app(id, RunSelection::Default),
             Message::AppRunWithId(id, profile_id) => {
@@ -680,7 +680,7 @@ impl EnvBoxApp {
             }
             Message::ProfileDnsAdd => {
                 if let Err(err) = self.profile_draft.dns_editor.add() {
-                    self.set_status(StatusKind::Error, format!("上游配置失败：{err}"));
+                    self.set_status(StatusKind::Error, format!("Ошибка настройки вышестоящего DNS: {err}"));
                 }
             }
             Message::ProfileDnsRemove(index) => {
@@ -756,9 +756,9 @@ impl EnvBoxApp {
             }
             Message::InstanceStop(id) => {
                 if let Err(err) = self.instances.stop(id) {
-                    self.set_status(StatusKind::Error, format!("停止失败: {err}"));
+                    self.set_status(StatusKind::Error, format!("Не удалось остановить: {err}"));
                 } else {
-                    self.set_status(StatusKind::Success, "已停止");
+                    self.set_status(StatusKind::Success, "Остановлено");
                 }
             }
             Message::AuditRefresh => {
@@ -772,13 +772,13 @@ impl EnvBoxApp {
                 let _ = self.store.ensure_audit_dir();
                 let dir = self.store.audit_dir();
                 let _ = std::process::Command::new("explorer").arg(&dir).spawn();
-                self.set_status(StatusKind::Info, "已在资源管理器中打开审计日志目录");
+                self.set_status(StatusKind::Info, "Каталог журналов аудита открыт в Проводнике");
             }
             Message::OpenConfigDir => {
                 let _ = self.store.ensure_dirs();
                 let root = self.store.root();
                 let _ = std::process::Command::new("explorer").arg(root).spawn();
-                self.set_status(StatusKind::Info, "已在资源管理器中打开配置目录");
+                self.set_status(StatusKind::Info, "Каталог конфигурации открыт в Проводнике");
             }
             Message::RunProbe => {
                 let mut probe_path = None;
@@ -822,14 +822,14 @@ impl EnvBoxApp {
                         ])
                         .spawn();
                     if spawn_res.is_ok() {
-                        self.set_status(StatusKind::Success, "已在独立控制台中运行环境探针");
+                        self.set_status(StatusKind::Success, "Зонд окружения запущен в отдельной консоли");
                     } else {
-                        self.set_status(StatusKind::Error, "运行环境探针启动失败");
+                        self.set_status(StatusKind::Error, "Не удалось запустить зонд окружения");
                     }
                 } else {
                     self.set_status(
                         StatusKind::Error,
-                        "未找到 envbox-probe.exe，请先通过 cargo build 构建探针",
+                        "envbox-probe.exe не найден; сначала соберите зонд через cargo build",
                     );
                 }
             }
@@ -915,10 +915,10 @@ impl EnvBoxApp {
                     Ok(()) => {
                         self.close_behavior = CloseBehavior::Ask;
                         self.remember_close_choice = false;
-                        self.set_status(StatusKind::Success, "下次关闭 Aura 时将重新询问");
+                        self.set_status(StatusKind::Success, "При следующем закрытии Aura вопрос будет задан снова");
                     }
                     Err(err) => {
-                        self.set_status(StatusKind::Error, format!("保存关闭设置失败：{err}"))
+                        self.set_status(StatusKind::Error, format!("Не удалось сохранить настройку закрытия: {err}"))
                     }
                 }
             }

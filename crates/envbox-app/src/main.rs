@@ -76,7 +76,7 @@ fn show_startup_error(error: &str) {
     use windows::core::{w, PCWSTR};
     use windows::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_ICONERROR, MB_OK};
 
-    let text: Vec<u16> = format!("Aura 无法启动：{error}")
+    let text: Vec<u16> = format!("Aura не может запуститься: {error}")
         .encode_utf16()
         .chain(std::iter::once(0))
         .collect();

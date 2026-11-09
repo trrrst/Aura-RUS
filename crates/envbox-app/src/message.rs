@@ -22,12 +22,12 @@ impl Nav {
     ];
     pub fn label(self) -> &'static str {
         match self {
-            Nav::Workspaces => "环境配置",
-            Nav::Apps => "应用",
-            Nav::Profiles => "环境配置",
-            Nav::Instances => "运行实例",
-            Nav::Audit => "审计",
-            Nav::Settings => "设置",
+            Nav::Workspaces => "Профили",
+            Nav::Apps => "Приложения",
+            Nav::Profiles => "Профили",
+            Nav::Instances => "Экземпляры",
+            Nav::Audit => "Аудит",
+            Nav::Settings => "Настройки",
         }
     }
 }
@@ -59,8 +59,8 @@ impl DnsChoice {
 impl std::fmt::Display for DnsChoice {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DnsChoice::Host => write!(f, "宿主"),
-            DnsChoice::VirtualView => write!(f, "虚拟视图"),
+            DnsChoice::Host => write!(f, "Хост"),
+            DnsChoice::VirtualView => write!(f, "Виртуальное представление"),
         }
     }
 }
@@ -103,10 +103,10 @@ impl WebRtcChoice {
     /// Compact badge text for profile cards / instance rows.
     pub fn short_label(self) -> &'static str {
         match self {
-            WebRtcChoice::Host => "WebRTC: 宿主",
-            WebRtcChoice::PublicInterfaceOnly => "WebRTC: 仅公网",
-            WebRtcChoice::ProxyOnly => "WebRTC: 仅代理",
-            WebRtcChoice::Strict => "WebRTC: 严格",
+            WebRtcChoice::Host => "WebRTC: хост",
+            WebRtcChoice::PublicInterfaceOnly => "WebRTC: только публичная сеть",
+            WebRtcChoice::ProxyOnly => "WebRTC: только прокси",
+            WebRtcChoice::Strict => "WebRTC: строгий",
         }
     }
 }
@@ -114,10 +114,10 @@ impl WebRtcChoice {
 impl std::fmt::Display for WebRtcChoice {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            WebRtcChoice::Host => write!(f, "宿主"),
-            WebRtcChoice::PublicInterfaceOnly => write!(f, "仅公网"),
-            WebRtcChoice::ProxyOnly => write!(f, "仅代理"),
-            WebRtcChoice::Strict => write!(f, "严格"),
+            WebRtcChoice::Host => write!(f, "Хост"),
+            WebRtcChoice::PublicInterfaceOnly => write!(f, "Только публичная сеть"),
+            WebRtcChoice::ProxyOnly => write!(f, "Только прокси"),
+            WebRtcChoice::Strict => write!(f, "Строгий"),
         }
     }
 }

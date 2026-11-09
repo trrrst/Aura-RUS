@@ -40,10 +40,10 @@ pub fn query(proxy: Option<&BrowserProxy>) -> Result<LookupResult, String> {
     }
     let source = proxy
         .map(|p| format!("Profile {}", p.chrome_server()))
-        .unwrap_or_else(|| "Aura 当前网络（无 Profile 代理）".into());
+        .unwrap_or_else(|| "Текущая сеть Aura (без прокси профиля)".into());
     let body = request(proxy)?;
     let response: serde_json::Value = serde_json::from_slice(&body)
-        .map_err(|_| "查询失败：服务返回格式已变化（不是有效 JSON）".to_string())?;
+        .map_err(|_| "Ошибка запроса: сервис изменил формат ответа (некорректный JSON)".to_string())?;
     let field = |name: &str| {
         response
             .get(name)
@@ -54,7 +54,7 @@ pub fn query(proxy: Option<&BrowserProxy>) -> Result<LookupResult, String> {
     let reported = field("ip");
     let ip = reported
         .parse::<IpAddr>()
-        .map_err(|_| "查询失败：响应缺少有效出口 IP".to_string())?;
+        .map_err(|_| "Ошибка запроса: в ответе нет корректного внешнего IP".to_string())?;
     let iana = field("timezone").to_owned();
     let mapped = if iana.is_empty() {
         None
@@ -64,13 +64,13 @@ pub fn query(proxy: Option<&BrowserProxy>) -> Result<LookupResult, String> {
     let windows = mapped.map(str::to_owned);
     let can_fill = mapped.is_some_and(envbox_storage::windows_id_exists);
     let status = if iana.is_empty() {
-        "服务未提供具体时区，请手动选择".into()
+        "Сервис не сообщил конкретный часовой пояс, выберите вручную".into()
     } else if mapped.is_none() {
-        "此 IANA 时区没有唯一 CLDR Windows 对应项，请手动选择".into()
+        "У этого пояса IANA нет однозначного соответствия Windows в CLDR, выберите вручную".into()
     } else if !can_fill {
-        "此 Windows 时区在当前系统不可用，请手动选择".into()
+        "Этот часовой пояс Windows недоступен в системе, выберите вручную".into()
     } else {
-        "已找到可填入的具体时区".into()
+        "Найден часовой пояс, который можно подставить".into()
     };
     let location = [field("country"), field("region"), field("city")]
         .into_iter()
@@ -106,7 +106,7 @@ fn query_time() -> String {
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs();
-        format!("Unix {seconds}（UTC）")
+        format!("Unix {seconds} (UTC)")
     }
 }
 
@@ -134,29 +134,29 @@ fn request(proxy: Option<&BrowserProxy>) -> Result<Vec<u8>, String> {
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()
-        .map_err(|_| "查询失败：无法启动系统网络请求".to_string())?;
+        .map_err(|_| "Ошибка запроса: не удалось запустить системный сетевой запрос".to_string())?;
     let mut body = Vec::new();
     let read = child
         .stdout
         .take()
-        .ok_or("查询失败：无法读取响应")?
+        .ok_or("Ошибка запроса: не удалось прочитать ответ")?
         .take(LIMIT + 1)
         .read_to_end(&mut body);
     if read.is_err() || body.len() as u64 > LIMIT {
         let _ = child.kill();
         let _ = child.wait();
-        return Err("查询失败：响应无法读取或超过 1 MiB".into());
+        return Err("Ошибка запроса: ответ не читается или превышает 1 МиБ".into());
     }
     let status = child
         .wait()
-        .map_err(|_| "查询失败：无法读取网络请求状态".to_string())?;
+        .map_err(|_| "Ошибка запроса: не удалось прочитать состояние сетевого запроса".to_string())?;
     if !status.success() {
         return Err(match status.code() {
-            Some(28) => "查询超时：总时限为 10 秒".into(),
-            Some(63) => "查询失败：响应超过 1 MiB".into(),
-            Some(22) => "查询失败：服务拒绝请求或没有此 IP 的记录".into(),
-            Some(60) | Some(51) => "查询失败：HTTPS 证书校验未通过".into(),
-            _ => "查询失败：无法连接服务，请检查网络后重试".into(),
+            Some(28) => "Время запроса истекло: общий лимит 10 секунд".into(),
+            Some(63) => "Ошибка запроса: ответ превышает 1 МиБ".into(),
+            Some(22) => "Ошибка запроса: сервис отклонил запрос или не знает этот IP".into(),
+            Some(60) | Some(51) => "Ошибка запроса: проверка HTTPS-сертификата не пройдена".into(),
+            _ => "Ошибка запроса: нет связи с сервисом, проверьте сеть и повторите".into(),
         });
     }
     Ok(body)

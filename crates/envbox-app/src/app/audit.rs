@@ -78,10 +78,10 @@ impl EnvBoxApp {
                     .spawn(move || {
                         let _ = sender.send(AuditSnapshot::load(directory));
                     });
-                worker.map_err(|error| format!("无法启动审计加载任务：{error}"))?;
+                worker.map_err(|error| format!("Не удалось начать загрузку аудита: {error}"))?;
                 receiver
                     .await
-                    .map_err(|_| "审计加载任务意外结束".to_string())
+                    .map_err(|_| "Загрузка аудита неожиданно прервалась".to_string())
             },
             move |result| Message::AuditLoaded(generation, result),
         )
@@ -163,7 +163,7 @@ impl EnvBoxApp {
         self.audit_events
             .iter()
             .filter(|ev| {
-                if q.is_empty() || q == "全部软件" {
+                if q.is_empty() || q == "Все программы" {
                     return true;
                 }
                 self.audit_software_label(ev).eq_ignore_ascii_case(q)

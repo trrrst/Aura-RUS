@@ -89,7 +89,7 @@ impl ManagementState {
                     self.instances.clear();
                     self.diagnostics_instance = None;
                     self.clear_pending();
-                    self.notice = Some("Supervisor 已换代；列表以当前服务端记录为准。TrackingLost 表示未恢复跟踪，不能保证进程已退出。".into());
+                    self.notice = Some("Supervisor перезапущен; список соответствует текущим данным службы. TrackingLost означает, что отслеживание не восстановлено и завершение процесса не гарантировано.".into());
                 }
                 self.generation = Some(response.generation.clone());
                 if reply.operation == "List" {
@@ -126,7 +126,7 @@ impl ManagementState {
                     response.status.as_str(),
                     "Ok" | "Running" | "Stopped" | "Stopping"
                 ) {
-                    self.error = Some(format!("Supervisor：{}", response.status));
+                    self.error = Some(format!("Supervisor: {}", response.status));
                 }
             }
         }
@@ -148,13 +148,13 @@ fn prepare_run(
         .applications
         .iter()
         .find(|application| application.id == application_id)
-        .ok_or("所选持久应用已不存在；请刷新")?;
+        .ok_or("Выбранное постоянное приложение больше не существует; обновите")?;
     application.validate().map_err(|error| error.to_string())?;
     let snapshot = store
         .prepare_run_snapshot(container_id, instance_id)
         .map_err(|error| error.to_string())?;
     if expected_profile.is_some_and(|profile| profile != snapshot.effective_profile.id) {
-        return Err("环境配置运行快照归属已变更；请刷新".into());
+        return Err("Принадлежность снимка запуска профиля изменилась; обновите".into());
     }
     snapshot
         .effective_profile
@@ -172,7 +172,7 @@ impl EnvBoxApp {
     pub(super) fn workspace_detect(&mut self, site: envbox_core::DetectionSite) -> Task<Message> {
         if self.workspaces.dirty() || self.profile_draft != self.profile_saved_draft {
             self.workspace_management.error =
-                Some("请先保存或取消环境配置修改，再打开检测页".into());
+                Some("Сохраните или отмените изменения профиля, затем откройте страницу проверки".into());
             return Task::none();
         }
         if self.workspace_management.busy || self.workspace_management.pending_run.is_some() {
@@ -182,7 +182,7 @@ impl EnvBoxApp {
             self.profile_draft.id,
             self.workspace_management.application_id,
         ) else {
-            self.workspace_management.error = Some("请选择已保存环境配置及 Chrome 应用".into());
+            self.workspace_management.error = Some("Выберите сохранённый профиль и приложение Chrome".into());
             return Task::none();
         };
         self.bind_profile_scope();
@@ -190,7 +190,7 @@ impl EnvBoxApp {
             return Task::none();
         };
         let Some(generation) = self.workspace_management.generation.clone() else {
-            self.workspace_management.error = Some("请先刷新运行状态".into());
+            self.workspace_management.error = Some("Сначала обновите состояние запуска".into());
             return Task::none();
         };
         self.workspace_management.busy = true;
@@ -233,7 +233,7 @@ impl EnvBoxApp {
                     workspace_id,
                     operation: "Detect".into(),
                     result: rx.await.unwrap_or_else(|_| {
-                        Err("检测请求后台异常终止；请刷新运行状态确认浏览器".into())
+                        Err("Фоновый запрос проверки аварийно завершился; обновите состояние, чтобы проверить браузер".into())
                     }),
                     run_submission_unknown: false,
                 }
@@ -249,7 +249,7 @@ impl EnvBoxApp {
     pub(super) fn workspace_run(&mut self) -> Task<Message> {
         if self.workspaces.dirty() || self.profile_draft != self.profile_saved_draft {
             self.workspace_management.error =
-                Some("请先保存或取消环境配置修改，再创建不可变运行快照".into());
+                Some("Сохраните или отмените изменения профиля, затем создавайте неизменяемый снимок запуска".into());
             return Task::none();
         }
         if self.workspace_management.busy {
@@ -257,23 +257,23 @@ impl EnvBoxApp {
         }
         if self.workspace_management.pending_run.is_some() {
             self.workspace_management.error =
-                Some("上次运行结果尚未知；请查询原实例，不能再次启动".into());
+                Some("Результат прошлого запуска неизвестен; узнайте состояние исходного экземпляра — повторный запуск запрещён".into());
             return Task::none();
         }
         let Some(profile_id) = self.profile_draft.id else {
-            self.workspace_management.error = Some("请先保存环境配置".into());
+            self.workspace_management.error = Some("Сначала сохраните профиль".into());
             return Task::none();
         };
         self.bind_profile_scope();
         if let Some(error) = self.workspaces.error.clone() {
-            self.workspace_management.error = Some(format!("环境配置运行准备失败：{error}"));
+            self.workspace_management.error = Some(format!("Не удалось подготовить запуск профиля: {error}"));
             return Task::none();
         }
         let (Some(container_id), Some(application_id)) = (
             self.workspaces.selected,
             self.workspace_management.application_id,
         ) else {
-            self.workspace_management.error = Some("请选择已保存环境配置及应用".into());
+            self.workspace_management.error = Some("Выберите сохранённый профиль и приложение".into());
             return Task::none();
         };
         let command = RunCommand {
@@ -285,7 +285,7 @@ impl EnvBoxApp {
             return Task::none();
         }
         let Some(generation) = self.workspace_management.generation.clone() else {
-            self.workspace_management.error = Some("请先刷新运行状态，再启动环境配置".into());
+            self.workspace_management.error = Some("Обновите состояние, затем запускайте профиль".into());
             return Task::none();
         };
         self.workspace_management.pending_run = Some(command.clone());
@@ -310,7 +310,7 @@ impl EnvBoxApp {
             return Task::none();
         };
         let Some(generation) = self.workspace_management.generation.clone() else {
-            self.workspace_management.error = Some("请先刷新当前 Supervisor 实例".into());
+            self.workspace_management.error = Some("Сначала обновите текущий экземпляр Supervisor".into());
             return Task::none();
         };
         let command = if let Some(instance) = instance {
@@ -324,7 +324,7 @@ impl EnvBoxApp {
                 })
             else {
                 self.workspace_management.error =
-                    Some("实例不属于当前环境配置及运行管理会话；请刷新".into());
+                    Some("Экземпляр не относится к текущему профилю и сеансу управления; обновите".into());
                 return Task::none();
             };
             Some(RunCommand {
@@ -348,7 +348,7 @@ impl EnvBoxApp {
 
     pub(super) fn managed_instance_stop(&mut self, instance_id: Uuid) -> Task<Message> {
         let Some(generation) = self.workspace_management.generation.clone() else {
-            self.workspace_management.error = Some("请先刷新运行管理状态".into());
+            self.workspace_management.error = Some("Сначала обновите состояние управления запуском".into());
             return Task::none();
         };
         let Some(view) = self.workspace_management.instances.iter().find(|view| {
@@ -359,7 +359,7 @@ impl EnvBoxApp {
                     "TrackingLost" | "Exited" | "Stopped" | "Failed"
                 )
         }) else {
-            self.workspace_management.error = Some("实例已结束或运行管理会话已失效；请刷新".into());
+            self.workspace_management.error = Some("Экземпляр завершён или сеанс управления устарел; обновите".into());
             return Task::none();
         };
         let command = RunCommand {
@@ -422,7 +422,7 @@ impl EnvBoxApp {
                 });
                 let (result, run_submission_unknown) = rx
                     .await
-                    .unwrap_or_else(|_| (Err("Supervisor 后台请求异常终止".into()), true));
+                    .unwrap_or_else(|_| (Err("Фоновый запрос к Supervisor аварийно завершился".into()), true));
                 ManagementReply {
                     epoch,
                     workspace_id,
@@ -445,7 +445,7 @@ impl EnvBoxApp {
         if reply.operation == "Run" && reply.result.is_err() {
             if reply.run_submission_unknown {
                 self.workspace_management.notice = Some(
-                    "运行结果未知；保留原 Instance UUID，请查询原实例，禁止自动重新启动。".into(),
+                    "Результат запуска неизвестен; исходный Instance UUID сохранён — узнайте состояние исходного экземпляра, автоматический перезапуск запрещён.".into(),
                 );
             } else {
                 self.workspace_management.clear_pending();
@@ -501,8 +501,8 @@ fn stop_profile_runs(
                 if response.generation != generation {
                     // Keep facts already confirmed by the original service. A replacement
                     // invalidates the remaining stop set and has not verified those facts.
-                    errors.push("运行管理会话已失效；停止操作已中断，请刷新当前会话".into());
-                    latest.status = errors.join("；");
+                    errors.push("Сеанс управления устарел; остановка прервана, обновите текущий сеанс".into());
+                    latest.status = errors.join("; ");
                     return Ok(latest);
                 }
                 for view in response.instances {
@@ -512,7 +512,7 @@ fn stop_profile_runs(
                     latest.instances.push(view);
                 }
                 if !matches!(response.status.as_str(), "Ok" | "Stopped" | "Stopping") {
-                    errors.push(format!("停止失败：{}", response.status));
+                    errors.push(format!("Не удалось остановить: {}", response.status));
                 }
             }
             Err(error) => {
@@ -527,13 +527,13 @@ fn stop_profile_runs(
             latest = response;
         }
         Ok(response) if response.generation != generation => {
-            errors.push("运行管理会话已失效；请刷新当前会话，已确认的停止结果仍保留".into());
+            errors.push("Сеанс управления устарел; обновите сеанс — подтверждённые остановки сохранены".into());
         }
-        Ok(response) => errors.push(format!("刷新失败：{}", response.status)),
-        Err(error) => errors.push(format!("刷新失败：{error}")),
+        Ok(response) => errors.push(format!("Ошибка обновления: {}", response.status)),
+        Err(error) => errors.push(format!("Ошибка обновления: {error}")),
     }
     if !errors.is_empty() {
-        latest.status = errors.join("；");
+        latest.status = errors.join("; ");
     }
     Ok(latest)
 }
@@ -552,15 +552,15 @@ fn management_exchange(
             .map_err(|error| error.to_string())?;
         client.timeout = std::time::Duration::from_secs(20);
         let command = if operation == "Run" {
-            let target = run.as_ref().ok_or("缺少运行身份")?;
-            let profile_id = profile_id.ok_or("缺少环境配置身份")?;
+            let target = run.as_ref().ok_or("Нет идентификатора запуска")?;
+            let profile_id = profile_id.ok_or("Нет идентификатора профиля")?;
             let document = store.load_containers().map_err(|error| error.to_string())?;
             if !document
                 .containers
                 .iter()
                 .any(|scope| scope.id == target.container_id && scope.profile_id == profile_id)
             {
-                return Err("环境配置运行作用域已变更；请刷新".into());
+                return Err("Область запуска профиля изменилась; обновите".into());
             }
             Some(prepare_run(
                 store,
@@ -583,7 +583,7 @@ fn management_exchange(
         };
         if operation == "StopAll" {
             return stop_profile_runs(
-                profile_id.ok_or("缺少环境配置身份")?,
+                profile_id.ok_or("Нет идентификатора профиля")?,
                 &generation,
                 |request| client.request(request).map_err(|error| error.to_string()),
             );
@@ -613,7 +613,7 @@ fn management_exchange(
     _: Option<RunCommand>,
     _: Option<String>,
 ) -> (Result<Response, String>, bool) {
-    (Err("Supervisor 仅支持 Windows".into()), false)
+    (Err("Supervisor работает только в Windows".into()), false)
 }
 
 #[cfg(test)]

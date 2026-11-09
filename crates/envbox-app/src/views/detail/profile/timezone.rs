@@ -12,9 +12,9 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     let state = &app.timezone_lookup;
     let query = button(
         text(if state.pending {
-            "查询中…"
+            "Запрос…"
         } else {
-            "查询时区"
+            "Определить пояс"
         })
         .size(TEXT_BODY)
         .font(font::ui_font()),
@@ -24,7 +24,7 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     .on_press_maybe((!state.pending).then_some(Message::TimezoneQuery));
     let proxy = &app.profile_draft.proxy;
     let mut body = column![form_field(
-        "Chrome 代理",
+        "Прокси Chrome",
         pick_list(
             ProxyChoice::ALL,
             Some(proxy.choice),
@@ -42,8 +42,8 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
         body = body.push(
             row![
                 form_field(
-                    "服务器",
-                    text_input("IPv4 / IPv6 / 域名", &proxy.host)
+                    "Сервер",
+                    text_input("IPv4 / IPv6 / домен", &proxy.host)
                         .on_input(Message::ProfileProxyHost)
                         .font(font::ui_font())
                         .size(TEXT_BODY)
@@ -52,8 +52,8 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
                         .width(Fill),
                 ),
                 iced::widget::container(form_field(
-                    "端口",
-                    text_input("端口", &proxy.port)
+                    "Порт",
+                    text_input("Порт", &proxy.port)
                         .on_input(Message::ProfileProxyPort)
                         .font(font::ui_font())
                         .size(TEXT_BODY)
@@ -66,14 +66,14 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
         );
     }
     body = body.push(
-        text("用于 Chrome 与出口查询，不支持认证；其他应用和 Windows 代理保持原样。")
+        text("Для Chrome и определения внешнего IP, без авторизации; другие приложения и прокси Windows не затрагиваются.")
             .size(TEXT_CAPTION)
             .color(MUTED)
             .font(font::ui_font()),
     );
     body = body.push(
         row![
-            text("根据出口查询时区")
+            text("Часовой пояс по внешнему IP")
                 .size(TEXT_BODY)
                 .font(font::name_font())
                 .width(Fill),
@@ -89,7 +89,7 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
             .font(font::ui_font()),
     );
     body = body.push(
-        text("未配置代理时查询 Aura 当前网络；浏览器扩展、代理绕过和站点分流可能产生不同出口。")
+        text("Без прокси проверяется текущая сеть Aura; расширения браузера, обход прокси и раздельная маршрутизация сайтов могут давать другой внешний IP.")
             .size(TEXT_CAPTION)
             .color(MUTED)
             .font(font::ui_font()),
@@ -104,42 +104,42 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     }
     if state.pending {
         body = body.push(
-            button(text("取消查询").size(TEXT_BODY).font(font::ui_font()))
+            button(text("Отменить запрос").size(TEXT_BODY).font(font::ui_font()))
                 .padding(Padding::from([8, 10]))
                 .style(secondary_btn)
                 .on_press(Message::TimezoneDismiss),
         );
     }
     if let Some(result) = &state.result {
-        let fill = button(text("填入时区").size(TEXT_BODY).font(font::ui_font()))
+        let fill = button(text("Подставить пояс").size(TEXT_BODY).font(font::ui_font()))
             .padding(Padding::from([8, 10]))
             .style(primary_btn)
             .on_press_maybe(result.can_fill.then_some(Message::TimezoneFill));
         body = body.push(iced::widget::horizontal_rule(1));
         body = body.push(
             column![
-                kv_row("查询来源", &result.source),
-                kv_row("查询时间", &result.queried_at),
-                kv_row("出口 IP", &result.ip.to_string()),
+                kv_row("Источник", &result.source),
+                kv_row("Время запроса", &result.queried_at),
+                kv_row("Внешний IP", &result.ip.to_string()),
                 kv_row(
-                    "地区 / 城市",
+                    "Регион / город",
                     if result.location.is_empty() {
-                        "服务未提供"
+                        "Не указано сервисом"
                     } else {
                         &result.location
                     }
                 ),
                 kv_row(
-                    "IANA 时区",
+                    "Часовой пояс IANA",
                     if result.iana.is_empty() {
-                        "服务未提供"
+                        "Не указано сервисом"
                     } else {
                         &result.iana
                     }
                 ),
                 kv_row(
-                    "Windows 时区",
-                    result.windows.as_deref().unwrap_or("无法自动填入")
+                    "Часовой пояс Windows",
+                    result.windows.as_deref().unwrap_or("Не удаётся подставить автоматически")
                 ),
                 text(&result.status)
                     .size(TEXT_CAPTION)
@@ -147,13 +147,13 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
                     .font(font::ui_font()),
                 row![
                     fill,
-                    button(text("关闭预览").size(TEXT_BODY).font(font::ui_font()))
+                    button(text("Закрыть").size(TEXT_BODY).font(font::ui_font()))
                         .padding(Padding::from([8, 10]))
                         .style(secondary_btn)
                         .on_press(Message::TimezoneDismiss)
                 ]
                 .spacing(8),
-                text("填入后点击“保存”，新的实例才会使用该时区。")
+                text("После подстановки нажмите «Сохранить» — пояс применится к новым экземплярам.")
                     .size(TEXT_CAPTION)
                     .color(MUTED)
                     .font(font::ui_font()),
@@ -161,5 +161,5 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
             .spacing(12),
         );
     }
-    form_section("代理与出口查询", body)
+    form_section("Прокси и внешний IP", body)
 }

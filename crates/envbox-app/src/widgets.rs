@@ -115,7 +115,7 @@ pub fn searchable_select(
     let mut list = column![].spacing(2);
     if filtered.is_empty() {
         list = list.push(
-            text("无匹配项")
+            text("Нет совпадений")
                 .size(theme::TEXT_CAPTION)
                 .color(MUTED)
                 .font(font::ui_font())
@@ -157,7 +157,7 @@ pub fn searchable_select(
 
     let panel = container(
         column![
-            text_input("输入以搜索…", &query)
+            text_input("Введите для поиска…", &query)
                 .on_input(Message::ComboQuery)
                 .size(theme::TEXT_BODY)
                 .padding(Padding::from([8, 10]))

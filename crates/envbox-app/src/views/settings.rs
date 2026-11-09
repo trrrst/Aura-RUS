@@ -67,33 +67,33 @@ fn info_row(label: &str, value: String) -> Element<'static, Message> {
 
 fn update_hint(app: &EnvBoxApp) -> String {
     match &app.update_status {
-        None => "手动检查 GitHub 上的最新稳定版本".into(),
-        Some(Err(error)) => format!("检查失败：{error}"),
-        Some(Ok(crate::updater::CheckResult::UpToDate)) => "当前已是最新版本".into(),
+        None => "Проверить вручную последнюю стабильную версию на GitHub".into(),
+        Some(Err(error)) => format!("Ошибка проверки: {error}"),
+        Some(Ok(crate::updater::CheckResult::UpToDate)) => "Установлена последняя версия".into(),
         Some(Ok(crate::updater::CheckResult::Available {
             tag,
             installer: Some(_),
         })) if app.update_installer_path.is_some() => {
-            format!("发现 {tag}，安装包已完成校验")
+            format!("Найдена {tag}, установщик проверен")
         }
         Some(Ok(crate::updater::CheckResult::Available {
             tag,
             installer: Some(_),
-        })) => format!("发现 {tag}，可下载并安装"),
+        })) => format!("Найдена {tag}, можно скачать и установить"),
         Some(Ok(crate::updater::CheckResult::Available {
             tag,
             installer: None,
-        })) => format!("发现 {tag}，可从发布页面下载安装包"),
+        })) => format!("Найдена {tag}, установщик можно скачать со страницы релизов"),
     }
 }
 
 pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     let header = column![
-        text("设置")
+        text("Настройки")
             .size(TEXT_PAGE_TITLE)
             .color(INK)
             .font(font::name_font()),
-        text("窗口行为、数据目录与版本更新")
+        text("Поведение окна, каталоги данных и обновления")
             .size(TEXT_CAPTION)
             .color(MUTED)
             .font(font::ui_font()),
@@ -101,54 +101,54 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     .spacing(6);
 
     let general = form_section(
-        "常规",
+        "Общие",
         setting_row(
-            "关闭主窗口",
+            "Закрытие главного окна",
             format!(
-                "当前：{}。适用于关闭按钮和 Alt+F4。",
+                "Сейчас: {}. Действует для кнопки закрытия и Alt+F4.",
                 app.close_behavior.label()
             ),
-            action_button("重新选择", Message::WindowClosePreferenceReset),
+            action_button("Изменить", Message::WindowClosePreferenceReset),
         ),
     );
 
     let audit_summary = if app.audit_loading {
-        "正在读取审计记录…".into()
+        "Чтение записей аудита…".into()
     } else {
         format!(
-            "共 {} 条记录，可在审计页查看最近 {} 条。",
+            "Всего записей: {}; на странице аудита доступны последние {}.",
             app.audit_total,
             app.audit_events.len()
         )
     };
     let data = form_section(
-        "数据与诊断",
+        "Данные и диагностика",
         column![
             setting_row(
-                "配置目录",
+                "Каталог конфигурации",
                 app.store.root().display().to_string(),
-                action_button("打开目录", Message::OpenConfigDir),
+                action_button("Открыть каталог", Message::OpenConfigDir),
             ),
             info_row(
-                "已保存配置",
+                "Сохранённые настройки",
                 format!(
-                    "{} 个应用 · {} 个环境配置",
+                    "Приложений: {} · профилей: {}",
                     app.applications.len(),
                     app.profiles.len()
                 ),
             ),
             setting_row(
-                "审计日志",
+                "Журнал аудита",
                 audit_summary,
-                action_button("打开日志", Message::OpenAuditDir),
+                action_button("Открыть журнал", Message::OpenAuditDir),
             ),
             setting_row(
-                "环境诊断",
-                "在独立窗口中查看语言、时区和 DNS 的读取结果。".into(),
+                "Диагностика окружения",
+                "Показать в отдельном окне, какие язык, часовой пояс и DNS видят программы.".into(),
                 button(
                     row![
                         icon(Icon::Play, INK, 12.0),
-                        text("启动探针").size(TEXT_BODY).font(font::ui_font()),
+                        text("Запустить зонд").size(TEXT_BODY).font(font::ui_font()),
                     ]
                     .spacing(6)
                     .align_y(Alignment::Center),
@@ -162,13 +162,13 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     );
 
     let update_label = if app.update_checking {
-        "处理中…"
+        "Обработка…"
     } else if app.update_installer_path.is_some() {
-        "安装更新"
+        "Установить обновление"
     } else if app.update_asset.is_some() {
-        "下载并安装"
+        "Скачать и установить"
     } else {
-        "检查更新"
+        "Проверить обновления"
     };
     let update_action = if app.update_checking {
         None
@@ -178,15 +178,15 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
         Some(Message::CheckUpdate)
     };
     let about = form_section(
-        "关于 Aura",
+        "Об Aura",
         column![
-            info_row("应用版本", crate::version::product_label()),
+            info_row("Версия приложения", crate::version::product_label()),
             info_row(
-                "核心引擎",
+                "Ядро",
                 format!("{} {}", crate::version::ENGINE_NAME, crate::version::PRODUCT_VERSION),
             ),
             setting_row(
-                "版本更新",
+                "Обновления",
                 update_hint(app),
                 button(text(update_label).size(TEXT_BODY).font(font::ui_font()))
                     .padding(Padding::from([8, 12]))
@@ -194,11 +194,11 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
                     .on_press_maybe(update_action),
             ),
             row![
-                action_button("发布页面", Message::OpenReleases),
-                action_button("源代码", Message::OpenRepository),
+                action_button("Страница релизов", Message::OpenReleases),
+                action_button("Исходный код", Message::OpenRepository),
             ]
             .spacing(8),
-            text("Windows 原生运行 · Microsoft Detours。环境信息视图作用于启动的进程树，目标仍可使用本机文件、网络和当前账户权限。")
+            text("Нативный запуск в Windows · Microsoft Detours. Подмена сведений об окружении действует на дерево запущенных процессов; программы по-прежнему имеют доступ к файлам, сети и правам текущей учётной записи.")
                 .size(TEXT_CAPTION)
                 .color(MUTED)
                 .font(font::ui_font())

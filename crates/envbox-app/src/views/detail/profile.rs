@@ -20,19 +20,19 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     let is_new = app.profile_draft.id.is_none();
     let editing = app.profile_edit_mode || is_new;
     let title = if is_new {
-        "新建环境配置"
+        "Новый профиль"
     } else if app.profile_draft.name.is_empty() {
-        "未命名配置"
+        "Профиль без имени"
     } else {
         app.profile_draft.name.as_str()
     };
 
     let header_action: Element<'_, Message> = if is_new {
-        container(text("新建").size(TEXT_BODY).color(ACCENT_TEXT)).into()
+        container(text("Новый").size(TEXT_BODY).color(ACCENT_TEXT)).into()
     } else if editing {
         container(text("")).into()
     } else {
-        button(text("编辑").size(TEXT_BODY).font(font::ui_font()))
+        button(text("Изменить").size(TEXT_BODY).font(font::ui_font()))
             .padding(Padding::from([8, 10]))
             .style(secondary_btn)
             .on_press(Message::ProfileEdit)
@@ -48,9 +48,9 @@ pub(super) fn view(app: &EnvBoxApp) -> Element<'_, Message> {
                     .color(INK)
                     .font(font::name_font()),
                 text(if is_new {
-                    "填写一组应用可以复用的环境设置"
+                    "Заполните настройки окружения, общие для приложений"
                 } else {
-                    "启动应用时按这组设置准备进程环境"
+                    "При запуске приложения окружение процесса готовится по этим настройкам"
                 })
                 .size(TEXT_CAPTION)
                 .color(MUTED)
@@ -84,11 +84,11 @@ fn profile_overview(app: &EnvBoxApp) -> Element<'_, Message> {
         None => {
             return container(
                 column![
-                    text("还没有选择环境配置")
+                    text("Профиль окружения не выбран")
                         .size(TEXT_SECTION)
                         .color(INK)
                         .font(font::name_font()),
-                    text("从左侧选择环境配置，或点击“新建环境配置”。")
+                    text("Выберите профиль слева или нажмите «Новый профиль».")
                         .size(TEXT_BODY)
                         .color(MUTED)
                         .font(font::ui_font()),
@@ -106,15 +106,15 @@ fn profile_overview(app: &EnvBoxApp) -> Element<'_, Message> {
 
     container(
         column![
-            section_title("配置概览", "保存后，使用此配置启动的应用会读取这些值"),
+            section_title("Обзор профиля", "После сохранения приложения, запущенные с этим профилем, будут видеть эти значения"),
             container(
                 column![
-                    kv_row("地区", &crate::options::region_label(&p.locale.region)),
+                    kv_row("Регион", &crate::options::region_label(&p.locale.region)),
                     kv_row("Locale", &p.locale.locale_name),
-                    kv_row("界面语言", &p.locale.ui_language),
-                    kv_row("Windows 时区", &p.timezone.windows_id),
-                    kv_row("Chrome / 检测代理", &p.browser.proxy.as_ref().map(|p| p.chrome_server()).unwrap_or_else(|| "无 Profile 代理".into())),
-                    text("代理仅用于 Chrome 与出口查询；其他应用网络保持原有行为。")
+                    kv_row("Язык интерфейса", &p.locale.ui_language),
+                    kv_row("Часовой пояс Windows", &p.timezone.windows_id),
+                    kv_row("Прокси Chrome / проверки", &p.browser.proxy.as_ref().map(|p| p.chrome_server()).unwrap_or_else(|| "Без прокси профиля".into())),
+                    text("Прокси используется только для Chrome и определения внешнего IP; сеть других приложений не меняется.")
                         .size(TEXT_CAPTION).color(MUTED).font(font::ui_font()),
                 ]
                 .spacing(7)
@@ -124,11 +124,11 @@ fn profile_overview(app: &EnvBoxApp) -> Element<'_, Message> {
             .style(inner_card_style),
             container(
                 column![
-                    field_label("高级设置"),
+                    field_label("Дополнительно"),
                     kv_row(
-                        "IANA 时区",
+                        "Часовой пояс IANA",
                         if p.timezone.iana_id.is_empty() {
-                            "跟随 Windows 时区"
+                            "Как у пояса Windows"
                         } else {
                             &p.timezone.iana_id
                         },
@@ -138,7 +138,7 @@ fn profile_overview(app: &EnvBoxApp) -> Element<'_, Message> {
                         "WebRTC",
                         &format!("{} · {}", webrtc, browser_guarantee_label(p.browser.webrtc)),
                     ),
-                    kv_row("环境变量", &format!("{} 项", p.environment.len())),
+                    kv_row("Переменные окружения", &format!("{} шт.", p.environment.len())),
                 ]
                 .spacing(7)
                 .padding(10),
@@ -147,28 +147,28 @@ fn profile_overview(app: &EnvBoxApp) -> Element<'_, Message> {
             .style(inner_card_style),
             container(
                 column![
-                    field_label("身份信息视图"),
+                    field_label("Подмена идентификации"),
                     kv_row(
-                        "主机名",
-                        p.identity.computer_name.as_deref().unwrap_or("跟随宿主")
+                        "Имя компьютера",
+                        p.identity.computer_name.as_deref().unwrap_or("Как у хоста")
                     ),
                     kv_row(
-                        "用户名",
-                        p.identity.user_name.as_deref().unwrap_or("跟随宿主")
+                        "Имя пользователя",
+                        p.identity.user_name.as_deref().unwrap_or("Как у хоста")
                     ),
                     kv_row(
                         "MAC",
-                        p.identity.mac_address.as_deref().unwrap_or("跟随宿主")
+                        p.identity.mac_address.as_deref().unwrap_or("Как у хоста")
                     ),
                     kv_row(
                         "MachineGuid",
-                        p.identity.machine_guid.as_deref().unwrap_or("跟随宿主")
+                        p.identity.machine_guid.as_deref().unwrap_or("Как у хоста")
                     ),
-                    text("仅影响支持的读取入口；真实账户、网卡和系统注册表保持原值。")
+                    text("Влияет только на поддерживаемые способы чтения; реальная учётная запись, сетевые адаптеры и системный реестр не меняются.")
                         .size(TEXT_CAPTION)
                         .color(FAINT)
                         .font(font::ui_font()),
-                    text("MAC 支持 Win32 和本机网卡 CIM 查询（Get-NetAdapter、Get-CimInstance）；远端查询保持远端值。")
+                    text("MAC подменяется для Win32 и локальных CIM-запросов к адаптерам (Get-NetAdapter, Get-CimInstance); удалённые запросы возвращают реальные значения.")
                         .size(TEXT_CAPTION)
                         .color(FAINT)
                         .font(font::ui_font()),
@@ -180,7 +180,7 @@ fn profile_overview(app: &EnvBoxApp) -> Element<'_, Message> {
             .style(inner_card_style),
 
             button(
-                text("删除环境配置")
+                text("Удалить профиль")
                     .size(TEXT_CAPTION)
                     .color(DANGER_TEXT)
                     .font(font::ui_font())
@@ -203,10 +203,10 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
     let tz_iana_opts = app.combo_options(crate::message::ComboField::TimezoneIana);
 
     let basic = form_section(
-        "基本信息",
+        "Основное",
         form_field(
-            "配置名称",
-            text_input("例如 US 开发环境", &app.profile_draft.name)
+            "Название профиля",
+            text_input("например, US разработка", &app.profile_draft.name)
                 .on_input(Message::ProfileName)
                 .size(TEXT_BODY)
                 .padding(Padding::from([8, 10]))
@@ -216,11 +216,11 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
     );
     let mut language = column![
         form_field(
-            "地区",
+            "Регион",
             searchable_select(
                 crate::message::ComboField::Region,
                 &app.profile_draft.region,
-                "选择地区",
+                "Выберите регион",
                 app.open_combo == Some(crate::message::ComboField::Region),
                 &app.combo_query,
                 &region_opts,
@@ -229,11 +229,11 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
             ),
         ),
         form_field(
-            "区域格式（Locale）",
+            "Региональный формат (Locale)",
             searchable_select(
                 crate::message::ComboField::Locale,
                 &app.profile_draft.locale,
-                "选择区域格式",
+                "Выберите региональный формат",
                 app.open_combo == Some(crate::message::ComboField::Locale),
                 &app.combo_query,
                 &locale_opts,
@@ -242,11 +242,11 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
             ),
         ),
         form_field(
-            "界面语言",
+            "Язык интерфейса",
             searchable_select(
                 crate::message::ComboField::Ui,
                 &app.profile_draft.ui,
-                "选择界面语言",
+                "Выберите язык интерфейса",
                 app.open_combo == Some(crate::message::ComboField::Ui),
                 &app.combo_query,
                 &ui_opts,
@@ -255,11 +255,11 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
             ),
         ),
         form_field(
-            "Windows 时区",
+            "Часовой пояс Windows",
             searchable_select(
                 crate::message::ComboField::Timezone,
                 &app.profile_draft.tz,
-                "选择 Windows 时区",
+                "Выберите часовой пояс Windows",
                 app.open_combo == Some(crate::message::ComboField::Timezone),
                 &app.combo_query,
                 &tz_opts,
@@ -271,11 +271,11 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
     .spacing(14);
     if app.profile_advanced {
         language = language.push(form_field(
-            "IANA 时区",
+            "Часовой пояс IANA",
             searchable_select(
                 crate::message::ComboField::TimezoneIana,
                 &app.profile_draft.tz_iana,
-                "选择 IANA 时区",
+                "Выберите часовой пояс IANA",
                 app.open_combo == Some(crate::message::ComboField::TimezoneIana),
                 &app.combo_query,
                 &tz_iana_opts,
@@ -296,11 +296,11 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
                 14.0
             ),
             column![
-                text("高级环境设置")
+                text("Дополнительные настройки окружения")
                     .size(TEXT_BODY)
                     .color(INK_2)
                     .font(font::name_font()),
-                text("身份、IANA 时区、DNS、WebRTC 与变量")
+                text("Идентификация, пояс IANA, DNS, WebRTC и переменные")
                     .size(TEXT_CAPTION)
                     .color(MUTED)
                     .font(font::ui_font()),
@@ -316,26 +316,26 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
     .on_press(Message::ProfileAdvancedToggle);
     let mut content = column![
         basic,
-        form_section("语言与时区", language),
+        form_section("Язык и часовой пояс", language),
         timezone::view(app),
         advanced_toggle,
     ]
     .spacing(16);
     if app.profile_advanced {
-        content = content.push(form_section("身份信息", column![
+        content = content.push(form_section("Идентификация", column![
                 row![
-                    text("留空时跟随宿主").size(TEXT_CAPTION).color(MUTED).font(font::ui_font()),
+                    text("Пусто — как у хоста").size(TEXT_CAPTION).color(MUTED).font(font::ui_font()),
                     tooltip(icon(Icon::Info, MUTED, 12.0),
                         container(column![
-                            text("提供 Win32 主机名 / 用户名、网卡信息和 MachineGuid 注册表读取视图。真实账户、网卡和系统安装标识保持原值；CPU、GPU、磁盘身份暂不覆盖。").size(TEXT_CAPTION).font(font::ui_font()),
-                            text("MAC 支持本机 Win32_NetworkAdapter、Win32_NetworkAdapterConfiguration 和 MSFT_NetAdapter 的 CIM 读取；其他身份字段的 WMI/CIM、GetUserNameEx、Native Registry API 和设备 IOCTL 暂不覆盖。").size(TEXT_CAPTION).font(font::ui_font()),
+                            text("Подменяет имя компьютера / пользователя Win32, сведения о сетевых адаптерах и MachineGuid в реестре. Реальная учётная запись, адаптеры и идентификатор установки не меняются; CPU, GPU и диски пока не подменяются.").size(TEXT_CAPTION).font(font::ui_font()),
+                            text("MAC подменяется при CIM-чтении локальных Win32_NetworkAdapter, Win32_NetworkAdapterConfiguration и MSFT_NetAdapter; WMI/CIM для других полей, GetUserNameEx, Native Registry API и IOCTL устройств пока не подменяются.").size(TEXT_CAPTION).font(font::ui_font()),
                         ].spacing(8)).width(320).padding(12),
                         tooltip::Position::Left,
                     ).style(inner_card_style),
                 ].spacing(8).align_y(Alignment::Center),
                 form_field(
-                    "主机名",
-                    text_input("1–15 位 ASCII 主机名", &app.profile_draft.identity.computer_name)
+                    "Имя компьютера",
+                    text_input("Имя компьютера ASCII, 1–15 символов", &app.profile_draft.identity.computer_name)
                         .on_input(Message::ProfileComputerName)
                         .size(TEXT_BODY)
                         .padding(Padding::from([8, 10]))
@@ -343,8 +343,8 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
                         .font(font::ui_font()),
                 ),
                 form_field(
-                    "用户名",
-                    text_input("字母、数字、点、下划线或连字符", &app.profile_draft.identity.user_name)
+                    "Имя пользователя",
+                    text_input("Буквы, цифры, точка, подчёркивание или дефис", &app.profile_draft.identity.user_name)
                         .on_input(Message::ProfileUserName)
                         .size(TEXT_BODY)
                         .padding(Padding::from([8, 10]))
@@ -361,7 +361,7 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
                             .style(input_style)
                             .font(font::ui_font())
                             .width(Fill),
-                        button(text("生成").size(TEXT_BODY).font(font::ui_font()))
+                        button(text("Сгенерировать").size(TEXT_BODY).font(font::ui_font()))
                             .padding(Padding::from([8, 10]))
                             .style(secondary_btn)
                             .on_press(Message::ProfileMacAddressGenerate),
@@ -372,14 +372,14 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
                 form_field(
                     "MachineGuid",
                     row![
-                        text_input("Windows 安装标识 UUID", &app.profile_draft.identity.machine_guid)
+                        text_input("UUID установки Windows", &app.profile_draft.identity.machine_guid)
                             .on_input(Message::ProfileMachineGuid)
                         .size(TEXT_BODY)
                             .padding(Padding::from([8, 10]))
                             .style(input_style)
                             .font(font::ui_font())
                             .width(Fill),
-                        button(text("生成").size(TEXT_BODY).font(font::ui_font()))
+                        button(text("Сгенерировать").size(TEXT_BODY).font(font::ui_font()))
                             .padding(Padding::from([8, 10]))
                             .style(secondary_btn)
                             .on_press(Message::ProfileMachineGuidGenerate),
@@ -390,10 +390,10 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
 
         ].spacing(14)));
         content = content.push(form_section(
-            "DNS 与网络保护",
+            "DNS и защита сети",
             column![
                 form_field(
-                    "DNS 模式",
+                    "Режим DNS",
                     pick_list(
                         DnsChoice::ALL,
                         Some(app.profile_draft.dns_mode),
@@ -425,7 +425,7 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
                     .font(font::ui_font())
                     .width(Fill),
                 ),
-                text("宿主模式保留浏览器原有行为；严格模式同时启用运行时网络保护。")
+                text("Режим «Хост» сохраняет обычное поведение браузера; строгий режим дополнительно включает сетевую защиту в рантайме.")
                     .size(TEXT_CAPTION)
                     .color(MUTED)
                     .font(font::ui_font()),
@@ -433,9 +433,9 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
             .spacing(14),
         ));
         content = content.push(form_section(
-            "环境变量",
+            "Переменные окружения",
             form_field(
-                "变量列表",
+                "Список переменных",
                 text_input("KEY=VALUE;KEY2=VALUE2", &app.profile_draft.env)
                     .on_input(Message::ProfileEnv)
                     .size(TEXT_BODY)
@@ -448,7 +448,7 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
     let save = button(
         row![
             icon(Icon::Check, INK, 14.0),
-            text("保存").size(TEXT_BODY).font(font::name_font())
+            text("Сохранить").size(TEXT_BODY).font(font::name_font())
         ]
         .spacing(6)
         .align_y(Alignment::Center),
@@ -457,14 +457,14 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
     .width(Fill)
     .style(primary_btn)
     .on_press(Message::ProfileSave);
-    let cancel = button(text("取消").size(TEXT_BODY).font(font::ui_font()))
+    let cancel = button(text("Отмена").size(TEXT_BODY).font(font::ui_font()))
         .padding(Padding::from([8, 12]))
         .style(secondary_btn)
         .on_press(Message::ProfileEditCancel);
     let mut actions = row![save, cancel].spacing(8).align_y(Alignment::Center);
     if app.profile_draft.id.is_some() {
         actions = actions.push(
-            button(text("删除").size(TEXT_BODY).font(font::ui_font()))
+            button(text("Удалить").size(TEXT_BODY).font(font::ui_font()))
                 .padding(Padding::from([8, 10]))
                 .style(danger_btn)
                 .on_press(Message::ProfileDelete),
@@ -474,7 +474,7 @@ fn profile_editor(app: &EnvBoxApp) -> (Element<'_, Message>, Element<'_, Message
 }
 fn dns_mode_label(mode: &envbox_core::DnsMode) -> &'static str {
     match mode {
-        envbox_core::DnsMode::Host => "宿主",
-        envbox_core::DnsMode::VirtualView => "虚拟视图",
+        envbox_core::DnsMode::Host => "Хост",
+        envbox_core::DnsMode::VirtualView => "Виртуальное представление",
     }
 }

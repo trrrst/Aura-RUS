@@ -22,7 +22,7 @@ pub struct ChromeContext {
     pub detection: Option<DetectionSite>,
 }
 fn error(value: impl std::fmt::Display) -> SessionError {
-    SessionError::Unsupported(format!("Chrome：{value}；请关闭对应浏览器后重试"))
+    SessionError::Unsupported(format!("Chrome: {value}; закройте этот браузер и повторите попытку"))
 }
 fn data_root() -> Result<PathBuf, SessionError> {
     if let Some(root) = std::env::var_os("ENVBOX_CONFIG_ROOT") {
@@ -30,7 +30,7 @@ fn data_root() -> Result<PathBuf, SessionError> {
     }
     std::env::var_os("LOCALAPPDATA")
         .map(|root| PathBuf::from(root).join("com.aura.envbox"))
-        .ok_or_else(|| error("无法确定 Aura 用户数据目录"))
+        .ok_or_else(|| error("Не удалось определить каталог пользовательских данных Aura"))
 }
 /// Read branding without loading or executing the browser. Install channels
 /// share "Google Chrome" branding, so that name alone cannot imply Stable.
@@ -97,7 +97,7 @@ fn product_name(executable: &Path) -> Option<String> {
 fn default_chrome_directory(launch: &LaunchTarget) -> Result<PathBuf, SessionError> {
     let unknown = || {
         SessionError::Unsupported(
-        "Chrome：无法可靠确定此浏览器渠道的默认数据目录；请显式设置 --user-data-dir 或开启独立浏览器数据目录".into())
+        "Chrome: не удалось надёжно определить каталог данных по умолчанию для этого канала браузера; задайте --user-data-dir явно или включите отдельный каталог данных браузера".into())
     };
     let LaunchTarget::Executable { path } = launch else {
         return Err(unknown());
@@ -193,7 +193,7 @@ pub fn proxy_arguments(req: &SessionStartRequest) -> Result<Vec<String>, Session
         .iter()
         .any(|switch| name.eq_ignore_ascii_case(switch))
     }) {
-        return Err(SessionError::Unsupported("Chrome：Profile 代理与应用手填代理参数冲突；请移除 proxy-server、PAC、自动检测、禁用代理或绕过参数".into()));
+        return Err(SessionError::Unsupported("Chrome: прокси профиля конфликтует с параметрами прокси, указанными вручную в приложении; удалите параметры proxy-server, PAC, автоопределения, отключения или обхода прокси".into()));
     }
     arguments.insert(
         switch_end,
@@ -235,7 +235,7 @@ pub fn configure(
         return Ok(());
     }
     if !app.supports_chrome_data() || app.id.is_nil() {
-        return Err(error("此功能仅支持已保存的 Chrome 可执行应用"));
+        return Err(error("Эта функция поддерживает только сохранённые приложения Chrome (исполняемый файл)"));
     }
     configure_directory(
         req,
@@ -261,7 +261,7 @@ fn configure_directory(
                     .get(index + 1)
                     .map(|value| chrome_token(value))
                     .filter(|value| !value.starts_with("--"))
-                    .ok_or_else(|| error("user-data-dir 缺少目录"))?
+                    .ok_or_else(|| error("В user-data-dir не указан каталог"))?
                     .to_owned(),
             );
         } else if let Some((name, value)) = switch.split_once('=') {
@@ -273,7 +273,7 @@ fn configure_directory(
     let directory = if let Some(application_id) = independent_app {
         if explicit.is_some() {
             return Err(error(
-                "独立数据目录与手填 --user-data-dir 冲突；移除参数或关闭开关",
+                "Отдельный каталог данных конфликтует с указанным вручную --user-data-dir; удалите параметр или выключите переключатель",
             ));
         }
         let root = root
@@ -292,7 +292,7 @@ fn configure_directory(
         directory
     } else if let Some(value) = explicit {
         if value.is_empty() {
-            return Err(error("user-data-dir 不能为空"));
+            return Err(error("user-data-dir не может быть пустым"));
         }
         let path = PathBuf::from(value);
         if path.is_absolute() {
@@ -369,7 +369,7 @@ fn creation_time(pid: u32) -> Result<u64, SessionError> {
     .map_err(error)?;
     let handle = crate::launcher::win::SafeHandle(handle);
     if unsafe { WaitForSingleObject(handle.0, 0) }.0 != 258 {
-        return Err(error("浏览器进程已退出"));
+        return Err(error("Процесс браузера завершился"));
     }
     let mut created = FILETIME::default();
     let mut exit = FILETIME::default();
@@ -409,9 +409,9 @@ impl ChromeLease {
             .write(true)
             .share_mode(1)
             .open(context.directory.join(".aura-browser-owner.json"))
-            .map_err(|_| error("数据目录正在被 Aura 使用，不能创建第二个根进程"))?;
+            .map_err(|_| error("Каталог данных уже используется Aura, второй корневой процесс создать нельзя"))?;
         if singleton(&context.directory).is_some() {
-            return Err(error("目录已被无法确认归属的 Chrome 使用"));
+            return Err(error("Каталог используется экземпляром Chrome неустановленной принадлежности"));
         }
         Ok(Some(Self {
             file,
@@ -423,16 +423,16 @@ impl ChromeLease {
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
         loop {
             if creation_time(pid).is_err() {
-                return Err(error("启动进程已退出，不能把转交到旧窗口视为新实例"));
+                return Err(error("Запускающий процесс завершился; передачу в старое окно нельзя считать новым экземпляром"));
             }
             if let Some(owner) = singleton(&context.directory) {
                 if owner != pid {
-                    return Err(error("Chrome 将启动转交到已有窗口，拒绝认定为新实例"));
+                    return Err(error("Chrome передал запуск в уже открытое окно; это не считается новым экземпляром"));
                 }
                 break;
             }
             if std::time::Instant::now() >= deadline {
-                return Err(error("未能确认实际 Chrome 根窗口与数据目录"));
+                return Err(error("Не удалось подтвердить фактическое корневое окно Chrome и каталог данных"));
             }
             std::thread::sleep(std::time::Duration::from_millis(50));
         }
@@ -479,7 +479,7 @@ pub fn reuse_detection(req: &SessionStartRequest) -> Result<Option<Uuid>, Sessio
     {
         drop(file);
         if singleton(&context.directory).is_some() {
-            return Err(error("已有 Chrome 不属于可确认的 Aura 会话"));
+            return Err(error("Уже запущенный Chrome не принадлежит подтверждённому сеансу Aura"));
         }
         return Ok(None);
     }
@@ -497,15 +497,15 @@ pub fn reuse_detection(req: &SessionStartRequest) -> Result<Option<Uuid>, Sessio
         .read_to_end(&mut data)
         .map_err(error)?;
     let record: Ownership =
-        serde_json::from_slice(&data).map_err(|_| error("浏览器正在启动或归属记录不可用"))?;
+        serde_json::from_slice(&data).map_err(|_| error("Браузер запускается или запись о принадлежности недоступна"))?;
     if record.request != normalized(req)
         || creation_time(record.pid)? != record.creation_time
         || singleton(&context.directory) != Some(record.pid)
     {
-        return Err(error("已有 Chrome 使用不同或无法确认的启动配置"));
+        return Err(error("Уже запущенный Chrome использует другую или неподтверждённую конфигурацию запуска"));
     }
     if !matches!(req.launch, LaunchTarget::Executable { .. }) {
-        return Err(error("不是 Chrome 可执行应用"));
+        return Err(error("Это не приложение Chrome (исполняемый файл)"));
     }
     // Use the existing launch pipeline even for the short singleton handoff.
     // If the old browser exits in the meantime, the replacement cannot escape
@@ -529,7 +529,7 @@ pub fn reuse_detection(req: &SessionStartRequest) -> Result<Option<Uuid>, Sessio
                 if let Some(job) = &session.job {
                     let _ = job.terminate();
                 }
-                return Err(error("检测页未转交给原有受控浏览器"));
+                return Err(error("Страница проверки не передана исходному управляемому браузеру"));
             }
             break;
         }
@@ -537,7 +537,7 @@ pub fn reuse_detection(req: &SessionStartRequest) -> Result<Option<Uuid>, Sessio
             if let Some(job) = &session.job {
                 let _ = job.terminate();
             }
-            return Err(error("原浏览器已退出或检测页转交未完成"));
+            return Err(error("Исходный браузер закрыт или передача страницы проверки не завершена"));
         }
         std::thread::sleep(std::time::Duration::from_millis(25));
     }

@@ -36,11 +36,11 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     .on_press(Message::AppPickerClose);
 
     let title = column![
-        text("选择应用")
+        text("Выбор приложения")
             .size(TEXT_TITLE)
             .color(INK)
             .font(font::name_font()),
-        text("从本机应用或命令行工具中选择。商店 / AppContainer 目标可能无法注入 Runtime。")
+        text("Выберите установленное приложение или консольную утилиту. В приложения из Store / AppContainer Runtime может не внедриться.")
             .size(TEXT_CAPTION)
             .color(MUTED)
             .font(font::ui_font()),
@@ -59,7 +59,7 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     let search = container(
         row![
             icon(Icon::Search, MUTED, 13.0),
-            text_input("搜索应用、命令或路径…", &state.query)
+            text_input("Поиск приложения, команды или пути…", &state.query)
                 .on_input(Message::AppPickerQuery)
                 .size(TEXT_BODY)
                 .padding(Padding::from([8, 10]))
@@ -76,16 +76,16 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
 
     let filtered = app.filtered_picker_items();
     let count_text = if state.loading {
-        "正在扫描本机应用和命令…".to_string()
+        "Поиск приложений и команд на компьютере…".to_string()
     } else {
-        format!("{} 个结果", filtered.len())
+        format!("Найдено: {}", filtered.len())
     };
 
     let list: Element<_> = if state.loading && state.items.is_empty() {
         container(
             column![
                 icon(Icon::Apps, MUTED, 22.0),
-                text("正在读取开始菜单 / 桌面 / 命令目录…")
+                text("Чтение меню «Пуск», рабочего стола и каталогов команд…")
                     .size(TEXT_BODY)
                     .color(INK_2)
                     .font(font::name_font()),
@@ -101,11 +101,11 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
         container(
             column![
                 icon(Icon::Search, MUTED, 22.0),
-                text("未找到匹配的应用")
+                text("Подходящих приложений не найдено")
                     .size(TEXT_BODY)
                     .color(INK_2)
                     .font(font::name_font()),
-                text("试试其他关键字，或使用「手动添加」")
+                text("Попробуйте другой запрос или «Добавить вручную»")
                     .size(TEXT_CAPTION)
                     .color(MUTED)
                     .font(font::ui_font()),
@@ -131,7 +131,7 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
         .font(font::ui_font());
 
     let manual_btn = button(
-        text("手动添加")
+        text("Добавить вручную")
             .size(TEXT_BODY)
             .color(INK_2)
             .font(font::name_font()),
@@ -143,7 +143,7 @@ pub fn view(app: &EnvBoxApp) -> Element<'_, Message> {
     let use_btn = button(
         row![
             icon(Icon::Play, INK, 11.0),
-            text("使用所选")
+            text("Выбрать")
                 .size(TEXT_BODY)
                 .color(INK)
                 .font(font::name_font()),
@@ -205,7 +205,7 @@ fn item_row<'a>(idx: usize, item: &'a DiscoveredApp, selected: bool) -> Element<
     let path_label = if item.capability.packaging == Packaging::Win32 {
         ellipsize(&item.path, 56)
     } else {
-        "Windows 应用".to_string()
+        "Приложение Windows".to_string()
     };
     let path = text(path_label)
         .size(TEXT_CAPTION)
@@ -278,10 +278,10 @@ fn app_tile(item: &DiscoveredApp) -> Element<'static, Message> {
 
 fn source_label(source: &'static str) -> &'static str {
     match source {
-        "start-menu" => "开始菜单",
-        "desktop" => "桌面",
-        "apps-folder" => "商店",
-        "commands" => "命令行",
+        "start-menu" => "Меню «Пуск»",
+        "desktop" => "Рабочий стол",
+        "apps-folder" => "Store",
+        "commands" => "Командная строка",
         other => other,
     }
 }

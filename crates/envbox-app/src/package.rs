@@ -57,9 +57,9 @@ pub struct Capability {
 impl Capability {
     pub fn badge(&self) -> &'static str {
         match self.injection {
-            InjectionSupport::Supported => "可使用环境配置",
-            InjectionSupport::Delayed => "兼容性有限",
-            InjectionSupport::Unsupported => "仅可直接启动",
+            InjectionSupport::Supported => "Профиль окружения поддерживается",
+            InjectionSupport::Delayed => "Ограниченная совместимость",
+            InjectionSupport::Unsupported => "Только прямой запуск",
         }
     }
 
@@ -67,12 +67,12 @@ impl Capability {
     /// the classifier and should not be rendered as product text.
     pub fn user_explanation(&self) -> &'static str {
         match self.injection {
-            InjectionSupport::Supported => "可以使用环境配置启动。",
+            InjectionSupport::Supported => "Можно запускать с профилем окружения.",
             InjectionSupport::Delayed => {
-                "Aura 会在 Windows 应用启动后尝试加载环境，启动初期的读取可能仍使用系统值。"
+                "Aura попытается подключить окружение после запуска приложения Windows; в первые моменты запуска оно ещё может получать системные значения."
             }
             InjectionSupport::Unsupported => {
-                "此应用暂不支持环境配置启动；可以选择直接启动。"
+                "Это приложение пока нельзя запустить с профилем окружения; можно выбрать прямой запуск."
             }
         }
     }
@@ -133,7 +133,7 @@ fn classify_aumid_target(target: &str) -> Capability {
         injection: InjectionSupport::Delayed,
         runtime_label: "Packaged",
         trust_label: "Unknown",
-        reason: "AUMID 目标，待按 Package Identity 分类",
+        reason: "Цель AUMID, ожидает классификации по Package Identity",
     }
 }
 
@@ -183,7 +183,7 @@ fn classic() -> Capability {
         injection: InjectionSupport::Supported,
         runtime_label: "Win32",
         trust_label: "Medium IL",
-        reason: "普通桌面进程，CREATE_SUSPENDED 注入",
+        reason: "Обычный настольный процесс, внедрение через CREATE_SUSPENDED",
     }
 }
 
@@ -203,7 +203,7 @@ fn packaged_win32() -> Capability {
         injection: InjectionSupport::Delayed,
         runtime_label: "Packaged Win32",
         trust_label: "Full Trust / Medium IL",
-        reason: "打包桌面应用：应经 AUMID 激活后注入，存在 race window",
+        reason: "Упакованное настольное приложение: внедрение после активации по AUMID, возможна гонка",
     }
 }
 
@@ -213,7 +213,7 @@ fn packaged_unknown() -> Capability {
         injection: InjectionSupport::Delayed,
         runtime_label: "Packaged",
         trust_label: "Unknown",
-        reason: "已识别为打包应用，运行时模型待探测",
+        reason: "Распознано как упакованное приложение, модель выполнения ещё не определена",
     }
 }
 
@@ -249,7 +249,7 @@ fn classify_manifest(manifest: &Path) -> Capability {
         || t.contains("entrypoint=\"windows.")
         || t.contains("entrypoint='windows.")
     {
-        return uwp("AppxManifest EntryPoint 为 Windows Runtime");
+        return uwp("EntryPoint в AppxManifest — Windows Runtime");
     }
     // Packaged desktop often just has Executable= without a WinRT entrypoint.
     if t.contains("executable=") {

@@ -14,8 +14,8 @@ impl TransportChoice {
 impl std::fmt::Display for TransportChoice {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
-            Self::Udp => "UDP（明文）",
-            Self::Tcp => "TCP（明文）",
+            Self::Udp => "UDP (без шифрования)",
+            Self::Tcp => "TCP (без шифрования)",
             Self::Dot => "DoT",
             Self::Doh => "DoH",
         })
@@ -60,7 +60,7 @@ impl UpstreamDraft {
                 .filter(|part| !part.is_empty())
                 .map(|part| {
                     part.parse()
-                        .map_err(|_| "bootstrap 必须为 literal IP".to_owned())
+                        .map_err(|_| "bootstrap должен быть IP-адресом".to_owned())
                 })
                 .collect::<Result<Vec<_>, _>>()?;
             DnsUpstream::Doh {
@@ -72,8 +72,8 @@ impl UpstreamDraft {
             let address = self
                 .address
                 .parse()
-                .map_err(|_| "上游地址必须为 literal IP")?;
-            let port = self.port.parse().map_err(|_| "端口必须为 1–65535")?;
+                .map_err(|_| "Адрес сервера должен быть IP-адресом")?;
+            let port = self.port.parse().map_err(|_| "Порт должен быть в диапазоне 1–65535")?;
             match self.transport {
                 TransportChoice::Udp => DnsUpstream::Udp { address, port },
                 TransportChoice::Tcp => DnsUpstream::Tcp { address, port },

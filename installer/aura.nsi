@@ -22,11 +22,12 @@ RequestExecutionLevel admin
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN
-!define MUI_FINISHPAGE_RUN_TEXT "启动 Aura"
+!define MUI_FINISHPAGE_RUN_TEXT "Запустить Aura"
 !define MUI_FINISHPAGE_RUN_FUNCTION LaunchInstalledAura
 !insertmacro MUI_PAGE_FINISH
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_LANGUAGE "Russian"
 !insertmacro MUI_LANGUAGE "SimpChinese"
 !insertmacro MUI_LANGUAGE "English"
 
@@ -47,7 +48,7 @@ Function ${Prefix}StopInstalledAura
     ${If} $0 != 0
       DetailPrint "Aura process shutdown failed: $1"
       IfSilent stop_abort
-      MessageBox MB_RETRYCANCEL|MB_ICONSTOP "无法安全关闭此安装目录中的 Aura，或程序文件仍被使用。请关闭 Aura 后重试。尚未修改安装文件。$\r$\n$\r$\n$1" IDRETRY stop_retry
+      MessageBox MB_RETRYCANCEL|MB_ICONSTOP "Не удалось безопасно закрыть Aura из этого каталога установки, или файлы программы ещё используются. Закройте Aura и повторите попытку. Файлы установки не изменялись.$\r$\n$\r$\n$1" IDRETRY stop_retry
       stop_abort:
         SetErrorLevel 1
         Quit
@@ -69,12 +70,12 @@ Function LaunchInstalledAura
   Pop $0
   Pop $1
   ${If} $0 != 0
-    MessageBox MB_OK|MB_ICONEXCLAMATION "Aura 已安装，但无法自动启动。请从开始菜单启动 Aura。$\r$\n$\r$\n$1"
+    MessageBox MB_OK|MB_ICONEXCLAMATION "Aura установлена, но не удалось запустить её автоматически. Запустите Aura из меню «Пуск».$\r$\n$\r$\n$1"
   ${EndIf}
 FunctionEnd
 
 ; 用户确认开始安装后才关闭旧 Aura。取消安装向导时，旧版继续运行。
-Section "-关闭旧版 Aura" SEC_CLOSE_OLD
+Section "-Закрытие старой версии Aura" SEC_CLOSE_OLD
   SectionIn RO
   Call StopInstalledAura
 SectionEnd
@@ -82,7 +83,7 @@ SectionEnd
 ; 覆盖安装不单独卸载旧版本：InstallDirRegKey 已把默认目录对齐到上一版安装位置，
 ; 下面的主程序 section 直接就地覆盖文件、快捷方式和卸载器。
 ; 用户配置在 %LOCALAPPDATA%\com.aura.envbox，安装器不写入、卸载也不删除。
-Section "Aura 主程序" SEC_MAIN
+Section "Основная программа Aura" SEC_MAIN
   SectionIn RO
   SetOutPath "$INSTDIR"
   File "..\artifacts\envbox-app.exe"
@@ -107,14 +108,14 @@ Section "Aura 主程序" SEC_MAIN
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Aura" "DisplayIcon" "$INSTDIR\envbox-app.exe"
 SectionEnd
 
-Section "开始菜单快捷方式" SEC_START
+Section "Ярлык в меню «Пуск»" SEC_START
   CreateDirectory "$SMPROGRAMS\Aura"
   CreateShortCut "$SMPROGRAMS\Aura\Aura.lnk" "$INSTDIR\envbox-app.exe" "" "$INSTDIR\envbox-app.exe" 0 SW_SHOWNORMAL "" "Aura"
   CreateShortCut "$SMPROGRAMS\Aura\EnvBox CLI.lnk" "$INSTDIR\envbox.exe" "" "$INSTDIR\envbox.exe" 0 SW_SHOWNORMAL "" "EnvBox CLI"
   CreateShortCut "$SMPROGRAMS\Aura\Environment Probe.lnk" "$INSTDIR\envbox-probe.exe" "" "$INSTDIR\envbox-probe.exe" 0 SW_SHOWNORMAL "" "Environment Probe"
 SectionEnd
 
-Section "桌面快捷方式" SEC_DESKTOP
+Section "Ярлык на рабочем столе" SEC_DESKTOP
   CreateShortCut "$DESKTOP\Aura.lnk" "$INSTDIR\envbox-app.exe" "" "$INSTDIR\envbox-app.exe" 0 SW_SHOWNORMAL "" "Aura"
 SectionEnd
 

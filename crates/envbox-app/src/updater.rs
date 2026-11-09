@@ -130,9 +130,9 @@ pub fn check_latest(current: &str) -> Result<CheckResult, String> {
             RELEASE_API_URL,
         ])
         .output()
-        .map_err(|error| format!("无法启动版本检查：{error}"))?;
+        .map_err(|error| format!("Не удалось начать проверку версии: {error}"))?;
     if !output.status.success() {
-        return Err(curl_failure("GitHub 版本检查失败", &output));
+        return Err(curl_failure("Не удалось проверить версию на GitHub", &output));
     }
     parse_release_json(&output.stdout, current)
 }
@@ -156,23 +156,23 @@ fn system_curl_path() -> Result<PathBuf, String> {
     let mut buffer = vec![0u16; 32_768];
     let length = unsafe { GetSystemDirectoryW(Some(&mut buffer)) } as usize;
     if length == 0 || length >= buffer.len() {
-        return Err("无法定位 Windows System32 目录".into());
+        return Err("Не удалось найти каталог Windows System32".into());
     }
     buffer.truncate(length);
     let directory =
-        String::from_utf16(&buffer).map_err(|_| "Windows System32 目录名称无效".to_string())?;
+        String::from_utf16(&buffer).map_err(|_| "Некорректное имя каталога Windows System32".to_string())?;
     let path = PathBuf::from(directory).join("curl.exe");
     if !path.is_file() {
-        return Err(format!("系统 curl.exe 不存在：{}", path.display()));
+        return Err(format!("Системный curl.exe не найден: {}", path.display()));
     }
     Ok(path)
 }
 
 fn parse_release_json(body: &[u8], current: &str) -> Result<CheckResult, String> {
     let release: GithubRelease = serde_json::from_slice(body)
-        .map_err(|error| format!("GitHub 版本信息无法解析：{error}"))?;
-    let latest = version_parts(&release.tag_name).ok_or("GitHub 版本号无效")?;
-    let installed = version_parts(current).ok_or("当前版本号无效")?;
+        .map_err(|error| format!("Не удалось разобрать сведения о версии с GitHub: {error}"))?;
+    let latest = version_parts(&release.tag_name).ok_or("Некорректный номер версии на GitHub")?;
+    let installed = version_parts(current).ok_or("Некорректный номер текущей версии")?;
     if latest <= installed {
         return Ok(CheckResult::UpToDate);
     }
@@ -272,20 +272,20 @@ pub fn download_verified(asset: &InstallerAsset) -> Result<PathBuf, String> {
     let checksum = asset
         .checksum
         .as_ref()
-        .ok_or("此版本缺少官方 SHA-256 校验文件，无法自动安装")?;
+        .ok_or("У этой версии нет официального файла SHA-256, автоматическая установка невозможна")?;
     if !is_release_asset_url(&asset.url, INSTALLER_NAME)
         || !is_release_asset_url(&checksum.url, CHECKSUM_NAME)
         || asset.size == 0
         || checksum.size == 0
     {
-        return Err("更新下载地址或大小未通过安全校验".into());
+        return Err("Адрес или размер загрузки обновления не прошли проверку безопасности".into());
     }
 
     let dir = std::env::temp_dir().join("aura-updates");
-    fs::create_dir_all(&dir).map_err(|error| format!("无法创建更新目录：{error}"))?;
+    fs::create_dir_all(&dir).map_err(|error| format!("Не удалось создать каталог обновлений: {error}"))?;
     let stamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map_err(|error| format!("系统时间无效：{error}"))?
+        .map_err(|error| format!("Некорректное системное время: {error}"))?
         .as_nanos();
     let name = format!("aura-update-{}-{stamp}", std::process::id());
     let pending_installer = dir.join(format!("{name}.exe.part"));
@@ -297,17 +297,17 @@ pub fn download_verified(asset: &InstallerAsset) -> Result<PathBuf, String> {
         download_file(&checksum.url, &pending_checksum, checksum.size)?;
 
         let checksum_bytes = fs::read(&pending_checksum)
-            .map_err(|error| format!("SHA-256 校验文件无法读取：{error}"))?;
+            .map_err(|error| format!("Не удалось прочитать файл SHA-256: {error}"))?;
         verify_file(&pending_checksum, checksum.size, &checksum.sha256)?;
         let sidecar_digest =
-            parse_checksum_file(&checksum_bytes).ok_or("官方 SHA-256 校验文件格式无效")?;
+            parse_checksum_file(&checksum_bytes).ok_or("Некорректный формат официального файла SHA-256")?;
         if sidecar_digest != asset.sha256 {
-            return Err("官方 SHA-256 校验文件与 GitHub API 摘要不一致".into());
+            return Err("Официальный файл SHA-256 не совпадает с хешем из GitHub API".into());
         }
 
         verify_file(&pending_installer, asset.size, &asset.sha256)?;
         fs::rename(&pending_installer, &ready)
-            .map_err(|error| format!("无法准备安装包：{error}"))?;
+            .map_err(|error| format!("Не удалось подготовить установщик: {error}"))?;
         let _ = fs::remove_file(&pending_checksum);
         Ok(ready.clone())
     })();
@@ -341,16 +341,16 @@ fn download_file(url: &str, destination: &Path, expected_size: u64) -> Result<()
         .arg("--url")
         .arg(url)
         .output()
-        .map_err(|error| format!("无法启动更新下载：{error}"))?;
+        .map_err(|error| format!("Не удалось начать загрузку обновления: {error}"))?;
     if !output.status.success() {
-        return Err(curl_failure("更新下载失败", &output));
+        return Err(curl_failure("Не удалось загрузить обновление", &output));
     }
     let actual_size = fs::metadata(destination)
-        .map_err(|error| format!("下载文件大小无法读取：{error}"))?
+        .map_err(|error| format!("Не удалось определить размер загруженного файла: {error}"))?
         .len();
     if actual_size != expected_size {
         return Err(format!(
-            "下载文件大小不符：预期 {expected_size}，实际 {actual_size}"
+            "Размер загруженного файла не совпадает: ожидалось {expected_size}, получено {actual_size}"
         ));
     }
     Ok(())
@@ -366,20 +366,20 @@ fn curl_failure(context: &str, output: &std::process::Output) -> String {
 }
 
 fn verify_file(path: &Path, expected_size: u64, expected_sha256: &str) -> Result<(), String> {
-    let mut file = File::open(path).map_err(|error| format!("安装包无法读取：{error}"))?;
+    let mut file = File::open(path).map_err(|error| format!("Не удалось прочитать установщик: {error}"))?;
     let size = file
         .metadata()
-        .map_err(|error| format!("安装包大小无法读取：{error}"))?
+        .map_err(|error| format!("Не удалось определить размер установщика: {error}"))?
         .len();
     if size != expected_size {
-        return Err(format!("安装包大小不符：预期 {expected_size}，实际 {size}"));
+        return Err(format!("Размер установщика не совпадает: ожидалось {expected_size}, получено {size}"));
     }
     let mut hasher = Sha256::new();
     let mut chunk = [0u8; 64 * 1024];
     loop {
         let read = file
             .read(&mut chunk)
-            .map_err(|error| format!("安装包校验失败：{error}"))?;
+            .map_err(|error| format!("Проверка установщика не пройдена: {error}"))?;
         if read == 0 {
             break;
         }
@@ -387,7 +387,7 @@ fn verify_file(path: &Path, expected_size: u64, expected_sha256: &str) -> Result
     }
     let actual = format!("{:x}", hasher.finalize());
     if actual != expected_sha256 {
-        return Err("安装包 SHA-256 校验失败".into());
+        return Err("Проверка SHA-256 установщика не пройдена".into());
     }
     Ok(())
 }
@@ -397,7 +397,7 @@ fn verify_file(path: &Path, expected_size: u64, expected_sha256: &str) -> Result
 /// successful download alone is not sufficient proof at launch time.
 pub fn verify_downloaded_installer(path: &Path, asset: &InstallerAsset) -> Result<(), String> {
     if asset.checksum.is_none() {
-        return Err("更新缺少官方 SHA-256 校验信息".into());
+        return Err("У обновления нет официальной контрольной суммы SHA-256".into());
     }
     verify_file(path, asset.size, &asset.sha256)
 }
@@ -421,7 +421,7 @@ fn parse_checksum_file(body: &[u8]) -> Option<String> {
 /// user cancels elevation, so the GUI only exits after a real launch success.
 pub fn launch_installer(path: &Path) -> Result<(), String> {
     if !path.is_file() {
-        return Err("已校验的安装包不存在".into());
+        return Err("Проверенный установщик не найден".into());
     }
 
     #[cfg(windows)]
@@ -453,7 +453,7 @@ pub fn launch_installer(path: &Path) -> Result<(), String> {
             return Ok(());
         }
         return Err(format!(
-            "安装器启动失败（ShellExecute code {}）",
+            "Не удалось запустить установщик (код ShellExecute {})",
             code.0 as isize
         ));
     }
@@ -463,7 +463,7 @@ pub fn launch_installer(path: &Path) -> Result<(), String> {
         Command::new(path)
             .spawn()
             .map(|_| ())
-            .map_err(|error| format!("安装器启动失败：{error}"))
+            .map_err(|error| format!("Не удалось запустить установщик: {error}"))
     }
 }
 
@@ -472,7 +472,7 @@ pub fn launch_installer(path: &Path) -> Result<(), String> {
 /// this helper into an arbitrary command or URL launcher.
 pub fn open_url(url: &str) -> Result<(), String> {
     if url != REPOSITORY_URL && url != LATEST_RELEASE_URL {
-        return Err("不允许打开此链接".into());
+        return Err("Открывать эту ссылку запрещено".into());
     }
 
     #[cfg(windows)]
@@ -492,7 +492,7 @@ pub fn open_url(url: &str) -> Result<(), String> {
             return Ok(());
         }
         return Err(format!(
-            "无法打开链接（ShellExecute code {}）",
+            "Не удалось открыть ссылку (код ShellExecute {})",
             code.0 as isize
         ));
     }
@@ -503,7 +503,7 @@ pub fn open_url(url: &str) -> Result<(), String> {
             .arg(url)
             .spawn()
             .map(|_| ())
-            .map_err(|error| format!("无法打开链接：{error}"))
+            .map_err(|error| format!("Не удалось открыть ссылку: {error}"))
     }
 }
 

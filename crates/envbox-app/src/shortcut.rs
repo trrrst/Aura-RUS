@@ -21,15 +21,15 @@ pub fn create_desktop(
     let config_root = std::path::absolute(config_root).map_err(|error| error.to_string())?;
     let profiles = envbox_storage::ConfigStore::new(config_root.clone())
         .load_profiles()
-        .map_err(|error| format!("读取环境配置失败：{error}"))?;
+        .map_err(|error| format!("Не удалось прочитать профиль окружения: {error}"))?;
     let profile = profiles
         .profiles
         .iter()
         .find(|profile| profile.id == app.default_profile_id)
-        .ok_or_else(|| format!("应用绑定的环境配置不存在：{}", app.default_profile_id))?;
+        .ok_or_else(|| format!("Профиль окружения, привязанный к приложению, не найден: {}", app.default_profile_id))?;
     let root_argument = config_root
         .to_str()
-        .ok_or("配置目录包含无法用于启动参数的字符")?;
+        .ok_or("Путь к каталогу конфигурации содержит символы, недопустимые в параметрах запуска")?;
     let arguments = envbox_launcher::format_args(&[
         "--launch-app".into(),
         app.id.to_string(),
@@ -39,7 +39,7 @@ pub fn create_desktop(
 
     unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) }
         .ok()
-        .map_err(|error| format!("初始化桌面快捷方式失败：{error}"))?;
+        .map_err(|error| format!("Не удалось подготовить ярлык на рабочем столе: {error}"))?;
     let _apartment = Apartment;
     let desktop = desktop_directory()?;
     let stem = format!(
@@ -78,7 +78,7 @@ pub fn create_desktop(
         let persist: IPersistFile = link.cast().map_err(|error| error.to_string())?;
         persist
             .Save(PCWSTR(wide(&destination).as_ptr()), true)
-            .map_err(|error| format!("保存桌面快捷方式失败：{error}"))?;
+            .map_err(|error| format!("Не удалось сохранить ярлык на рабочем столе: {error}"))?;
     }
     Ok(destination)
 }
@@ -94,7 +94,7 @@ impl Drop for Apartment {
 fn desktop_directory() -> Result<PathBuf, String> {
     unsafe {
         let pointer = SHGetKnownFolderPath(&FOLDERID_Desktop, Default::default(), None)
-            .map_err(|error| format!("读取桌面目录失败：{error}"))?;
+            .map_err(|error| format!("Не удалось определить папку рабочего стола: {error}"))?;
         let path = pointer.to_string();
         CoTaskMemFree(Some(pointer.0.cast()));
         let path = PathBuf::from(path.map_err(|error| error.to_string())?);
@@ -117,7 +117,7 @@ fn shortcut_name(name: &str) -> String {
         .collect();
     let name = name.trim().trim_end_matches(['.', ' ']);
     if name.is_empty() {
-        "应用".into()
+        "Приложение".into()
     } else {
         name.into()
     }

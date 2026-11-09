@@ -22,18 +22,18 @@ pub enum StorageTarget {
 impl std::fmt::Display for StorageAction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
-            Self::IsolatedWrite => "隔离写入",
-            Self::SharedReadOnly => "共享只读",
-            Self::SharedReadWrite => "共享可写（修改宿主）",
-            Self::Deny => "拒绝",
+            Self::IsolatedWrite => "Изолированная запись",
+            Self::SharedReadOnly => "Общий доступ, только чтение",
+            Self::SharedReadWrite => "Общий доступ с записью (изменяет хост)",
+            Self::Deny => "Запрещено",
         })
     }
 }
 impl std::fmt::Display for StorageTarget {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
-            Self::FileDirectory => "应用文件目录",
-            Self::RegistrySubtree => "HKCU 应用子树",
+            Self::FileDirectory => "Каталог файлов приложения",
+            Self::RegistrySubtree => "Поддерево приложения в HKCU",
         })
     }
 }

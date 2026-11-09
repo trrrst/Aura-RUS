@@ -54,55 +54,55 @@ fn parse_args(args: &[String]) -> Result<Option<StartupOptions>, String> {
         let argument = &args[index];
         if argument == "--launch-app" {
             if application_id.is_some() {
-                return Err("--launch-app 只能指定一次".into());
+                return Err("--launch-app можно указать только один раз".into());
             }
             let value = args
                 .get(index + 1)
                 .filter(|value| !value.is_empty())
-                .ok_or_else(|| "--launch-app 需要 Application UUID".to_string())?;
+                .ok_or_else(|| "Для --launch-app нужен UUID приложения".to_string())?;
             application_id = Some(
                 Uuid::parse_str(value)
-                    .map_err(|_| format!("--launch-app 的 UUID 无效：{value:?}"))?,
+                    .map_err(|_| format!("Некорректный UUID в --launch-app: {value:?}"))?,
             );
             index += 2;
             continue;
         }
         if let Some(value) = argument.strip_prefix("--launch-app=") {
             if application_id.is_some() {
-                return Err("--launch-app 只能指定一次".into());
+                return Err("--launch-app можно указать только один раз".into());
             }
             if value.is_empty() {
-                return Err("--launch-app 需要 Application UUID".into());
+                return Err("Для --launch-app нужен UUID приложения".into());
             }
             application_id = Some(
                 Uuid::parse_str(value)
-                    .map_err(|_| format!("--launch-app 的 UUID 无效：{value:?}"))?,
+                    .map_err(|_| format!("Некорректный UUID в --launch-app: {value:?}"))?,
             );
             index += 1;
             continue;
         }
         if argument == "--config-root" {
             if config_root.is_some() {
-                return Err("--config-root 只能指定一次".into());
+                return Err("--config-root можно указать только один раз".into());
             }
             let value = args
                 .get(index + 1)
                 .filter(|value| !value.is_empty())
-                .ok_or_else(|| "--config-root 需要绝对路径".to_string())?;
+                .ok_or_else(|| "Для --config-root нужен абсолютный путь".to_string())?;
             config_root = Some(parse_config_root(value)?);
             index += 2;
             continue;
         }
         if let Some(value) = argument.strip_prefix("--config-root=") {
             if config_root.is_some() {
-                return Err("--config-root 只能指定一次".into());
+                return Err("--config-root можно указать только один раз".into());
             }
             config_root = Some(parse_config_root(value)?);
             index += 1;
             continue;
         }
 
-        return Err(format!("快捷启动参数无法识别：{argument}"));
+        return Err(format!("Неизвестный параметр быстрого запуска: {argument}"));
     }
 
     let Some(application_id) = application_id else {
@@ -116,11 +116,11 @@ fn parse_args(args: &[String]) -> Result<Option<StartupOptions>, String> {
 
 fn parse_config_root(value: &str) -> Result<PathBuf, String> {
     if value.trim().is_empty() {
-        return Err("--config-root 需要绝对路径".into());
+        return Err("Для --config-root нужен абсолютный путь".into());
     }
     let path = PathBuf::from(value);
     if !path.is_absolute() {
-        return Err(format!("--config-root 必须是绝对路径：{}", path.display()));
+        return Err(format!("--config-root должен быть абсолютным путём: {}", path.display()));
     }
     Ok(path)
 }
@@ -139,22 +139,22 @@ fn launch_application(options: StartupOptions) -> Result<(), String> {
 
     let application = store
         .load_applications()
-        .map_err(|error| format!("应用配置读取失败：{error}"))?
+        .map_err(|error| format!("Не удалось прочитать настройки приложения: {error}"))?
         .applications
         .into_iter()
         .find(|application| application.id == options.application_id)
-        .ok_or_else(|| format!("应用不存在：{}", options.application_id))?;
-    validate_application(&application).map_err(|error| format!("已保存的应用配置无效：{error}"))?;
+        .ok_or_else(|| format!("Приложение не найдено: {}", options.application_id))?;
+    validate_application(&application).map_err(|error| format!("Сохранённые настройки приложения некорректны: {error}"))?;
 
     let profile = store
         .load_profiles()
-        .map_err(|error| format!("环境配置读取失败：{error}"))?
+        .map_err(|error| format!("Не удалось прочитать профиль окружения: {error}"))?
         .profiles
         .into_iter()
         .find(|profile| profile.id == application.default_profile_id)
         .ok_or_else(|| {
             format!(
-                "应用「{}」绑定的环境配置不存在：{}",
+                "Профиль окружения, привязанный к приложению «{}», не найден: {}",
                 application.name, application.default_profile_id
             )
         })?;
@@ -165,7 +165,7 @@ fn launch_application(options: StartupOptions) -> Result<(), String> {
     let mut instances = InstanceManager::new();
     let instance_id = instances
         .run(&application, RunTarget::Profile(profile))
-        .map_err(|error| format!("启动应用失败：{error}"))?;
+        .map_err(|error| format!("Не удалось запустить приложение: {error}"))?;
 
     // Normal Profile sessions have completed the independent session-host
     // handshake when `run` returns, so the launcher can exit immediately.
@@ -175,7 +175,7 @@ fn launch_application(options: StartupOptions) -> Result<(), String> {
     if is_windows_terminal {
         instances
             .wait_for_handoff(instance_id)
-            .map_err(|error| format!("Windows Terminal 交接失败：{error}"))?;
+            .map_err(|error| format!("Не удалось передать запуск в Windows Terminal: {error}"))?;
     }
     Ok(())
 }
@@ -192,7 +192,7 @@ fn reject_unsupported_capability(application: &Application) -> Result<(), String
     );
     if capability.injection == crate::package::InjectionSupport::Unsupported {
         return Err(format!(
-            "应用「{}」无法使用环境配置启动。{}",
+            "Приложение «{}» нельзя запустить с профилем окружения. {}",
             application.name,
             capability.user_explanation()
         ));

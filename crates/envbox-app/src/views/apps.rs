@@ -20,11 +20,11 @@ fn ellipsize(s: &str, max: usize) -> String {
 
 pub fn view_center(app: &EnvBoxApp) -> Element<'_, Message> {
     let title = column![
-        text("应用")
+        text("Приложения")
             .size(TEXT_PAGE_TITLE)
             .color(INK)
             .font(font::name_font()),
-        text("为每次启动选择环境配置，应用仍在本机正常运行。")
+        text("Выбирайте профиль окружения для каждого запуска; приложение работает на компьютере как обычно.")
             .size(TEXT_CAPTION)
             .color(MUTED)
             .font(font::ui_font()),
@@ -34,7 +34,7 @@ pub fn view_center(app: &EnvBoxApp) -> Element<'_, Message> {
     let add_btn = button(
         row![
             text("+").size(15).color(INK).font(font::name_font()),
-            text("添加应用")
+            text("Добавить приложение")
                 .size(TEXT_BODY)
                 .color(INK)
                 .font(font::ui_font()),
@@ -49,7 +49,7 @@ pub fn view_center(app: &EnvBoxApp) -> Element<'_, Message> {
     let search_bar = container(
         row![
             icon(Icon::Search, MUTED, 13.0),
-            text_input("搜索应用...", &app.search)
+            text_input("Поиск приложений...", &app.search)
                 .on_input(Message::Search)
                 .size(TEXT_BODY)
                 .padding(Padding::from([3, 5]))
@@ -77,7 +77,7 @@ pub fn view_center(app: &EnvBoxApp) -> Element<'_, Message> {
             let add_first = button(
                 row![
                     icon(Icon::Play, INK, 11.0),
-                    text("添加第一个应用")
+                    text("Добавить первое приложение")
                         .size(TEXT_BODY)
                         .color(INK)
                         .font(font::name_font()),
@@ -91,19 +91,19 @@ pub fn view_center(app: &EnvBoxApp) -> Element<'_, Message> {
 
             crate::widgets::empty_state(
                 Icon::Apps,
-                "暂无配置的应用",
-                "添加本机程序或命令，并选择启动时使用的环境配置。",
+                "Нет настроенных приложений",
+                "Добавьте программу или команду и выберите профиль окружения для запуска.",
                 Some(add_first.into()),
             )
         } else {
             container(
                 column![
                     icon(Icon::Search, MUTED, 24.0),
-                    text("未找到匹配的应用")
+                    text("Подходящих приложений не найдено")
                         .size(TEXT_BODY)
                         .color(INK_2)
                         .font(font::name_font()),
-                    text("请检查搜索关键字或尝试其他应用名称")
+                    text("Проверьте запрос или попробуйте другое название")
                         .size(TEXT_CAPTION)
                         .color(MUTED)
                         .font(font::ui_font()),
@@ -142,9 +142,9 @@ fn app_card<'a>(app: &'a EnvBoxApp, a: &'a envbox_core::Application) -> Element<
     let status_indicator = row![
         status_dot(if running_count > 0 { SUCCESS } else { FAINT }),
         text(if running_count > 0 {
-            format!("运行中 {running_count} 个")
+            format!("Запущено: {running_count}")
         } else {
-            "未运行".to_string()
+            "Не запущено".to_string()
         })
         .size(TEXT_CAPTION)
         .color(if running_count > 0 { SUCCESS } else { MUTED })
@@ -191,11 +191,11 @@ fn app_card<'a>(app: &'a EnvBoxApp, a: &'a envbox_core::Application) -> Element<
     .spacing(8)
     .align_y(Alignment::Center);
     let warning = if crate::package::chromium_renderer_sandbox_limited(a) {
-        Some("浏览器网页沙箱可能读取宿主信息；部分环境设置受限。")
+        Some("Песочница веб-страниц браузера может читать сведения хоста; часть настроек окружения ограничена.")
     } else {
         match capability.map(|value| value.injection) {
-            Some(crate::package::InjectionSupport::Unsupported) => Some("此应用无法使用环境配置。"),
-            Some(crate::package::InjectionSupport::Delayed) => Some("部分环境设置可能不生效。"),
+            Some(crate::package::InjectionSupport::Unsupported) => Some("Это приложение не может использовать профиль окружения."),
+            Some(crate::package::InjectionSupport::Delayed) => Some("Часть настроек окружения может не действовать."),
             _ => None,
         }
     };

@@ -14,7 +14,7 @@ use crate::widgets::{badge, primary_btn};
 pub fn view_center(app: &EnvBoxApp) -> Element<'_, Message> {
     let header = column![
         column![
-            text("环境配置")
+            text("Профили")
                 .size(TEXT_PAGE_TITLE)
                 .color(INK)
                 .font(font::name_font())
@@ -22,7 +22,7 @@ pub fn view_center(app: &EnvBoxApp) -> Element<'_, Message> {
             button(
                 row![
                     text("+").size(15).color(INK).font(font::name_font()),
-                    text("新建环境配置")
+                    text("Новый профиль")
                         .size(TEXT_BODY)
                         .color(INK)
                         .font(font::ui_font()),
@@ -35,7 +35,7 @@ pub fn view_center(app: &EnvBoxApp) -> Element<'_, Message> {
             .on_press(Message::ProfileNew),
         ]
         .spacing(12),
-        text("地区、语言、时区、DNS 与身份信息")
+        text("Регион, язык, часовой пояс, DNS и идентификация")
             .size(TEXT_CAPTION)
             .color(MUTED)
             .font(font::ui_font()),
@@ -46,7 +46,7 @@ pub fn view_center(app: &EnvBoxApp) -> Element<'_, Message> {
         let new_btn = button(
             row![
                 icon(Icon::Play, INK, 11.0),
-                text("新建第一个环境配置")
+                text("Создать первый профиль")
                     .size(TEXT_BODY)
                     .color(INK)
                     .font(font::name_font()),
@@ -60,16 +60,16 @@ pub fn view_center(app: &EnvBoxApp) -> Element<'_, Message> {
 
         crate::widgets::empty_state(
             Icon::Globe,
-            "暂无环境配置",
-            "创建一组应用可以复用的地区、语言、时区、网络和环境变量设置。",
+            "Профилей окружения пока нет",
+            "Создайте набор настроек региона, языка, часового пояса, сети и переменных окружения, общий для приложений.",
             Some(new_btn.into()),
         )
     } else {
         let list = app.profiles.iter().fold(column![].spacing(10), |col, p| {
             let selected = app.profile_draft.id == Some(p.id);
             let dns_label = match &p.dns.mode {
-                envbox_core::DnsMode::Host => "DNS: 宿主",
-                envbox_core::DnsMode::VirtualView => "DNS: 虚拟视图",
+                envbox_core::DnsMode::Host => "DNS: хост",
+                envbox_core::DnsMode::VirtualView => "DNS: виртуальный",
             };
             let dns_bg = match &p.dns.mode {
                 envbox_core::DnsMode::Host => theme::BORDER,
@@ -105,7 +105,7 @@ pub fn view_center(app: &EnvBoxApp) -> Element<'_, Message> {
             let mut metadata = row![].spacing(6).align_y(Alignment::Center);
             if !p.environment.is_empty() {
                 metadata = metadata.push(badge(
-                    &format!("Env: {} 项", p.environment.len()),
+                    &format!("Env: {}", p.environment.len()),
                     theme::BORDER,
                     MUTED,
                 ));
@@ -122,7 +122,7 @@ pub fn view_center(app: &EnvBoxApp) -> Element<'_, Message> {
             .count();
             if identity_count != 0 {
                 metadata = metadata.push(badge(
-                    &format!("身份: {identity_count} 项"),
+                    &format!("Идентификация: {identity_count}"),
                     ACCENT_BG,
                     ACCENT_TEXT,
                 ));

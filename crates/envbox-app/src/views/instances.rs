@@ -57,12 +57,12 @@ pub fn view_full(app: &EnvBoxApp) -> Element<'_, Message> {
 
     let header = row![
         column![
-            text("运行实例")
+            text("Экземпляры")
                 .size(TEXT_PAGE_TITLE)
                 .color(INK)
                 .font(font::name_font()),
             text(format!(
-                "共 {} 个实例 · 运行中 {} 个",
+                "Экземпляров: {} · запущено: {}",
                 instances.len() + managed.len(),
                 active_count
             ))
@@ -75,7 +75,7 @@ pub fn view_full(app: &EnvBoxApp) -> Element<'_, Message> {
         button(
             row![
                 icon(Icon::Monitor, INK_2, 12.0),
-                text("刷新实例状态")
+                text("Обновить состояние")
                     .size(TEXT_BODY)
                     .color(INK_2)
                     .font(font::ui_font())
@@ -95,7 +95,7 @@ pub fn view_full(app: &EnvBoxApp) -> Element<'_, Message> {
         let launch_btn = button(
             row![
                 icon(Icon::Play, INK, 11.0),
-                text("前往应用列表启动")
+                text("Перейти к списку приложений")
                     .size(TEXT_BODY)
                     .color(INK)
                     .font(font::name_font()),
@@ -111,11 +111,11 @@ pub fn view_full(app: &EnvBoxApp) -> Element<'_, Message> {
             column![].into()
         } else if app.instance_filter.is_some() {
             instance_empty_state(
-                "当前应用暂无实例",
-                "可以切换到其他应用，或查看全部实例。",
+                "У этого приложения нет экземпляров",
+                "Выберите другое приложение или посмотрите все экземпляры.",
                 Some(
                     button(
-                        text("查看全部")
+                        text("Показать все")
                             .size(TEXT_BODY)
                             .color(INK)
                             .font(font::name_font()),
@@ -128,8 +128,8 @@ pub fn view_full(app: &EnvBoxApp) -> Element<'_, Message> {
             )
         } else {
             instance_empty_state(
-                "暂无运行实例",
-                "在「应用」页面中点击「运行」启动程序后，实例会显示在这里；点击“刷新实例状态”查看最新状态。",
+                "Нет запущенных экземпляров",
+                "Запустите программу на странице «Приложения» — экземпляр появится здесь; нажмите «Обновить состояние», чтобы увидеть актуальные данные.",
                 Some(launch_btn.into()),
             )
         }
@@ -143,15 +143,15 @@ pub fn view_full(app: &EnvBoxApp) -> Element<'_, Message> {
                     .applications
                     .iter()
                     .find(|a| a.id == inst.application_id);
-                let app_name = application.map(|a| a.name.as_str()).unwrap_or("未知应用");
+                let app_name = application.map(|a| a.name.as_str()).unwrap_or("Неизвестное приложение");
                 let profile_label = if inst.profile_id.is_nil() {
-                    "宿主".to_string()
+                    "Хост".to_string()
                 } else {
                     app.profile_name(inst.profile_id)
                 };
 
                 let status_badge = if running {
-                    badge("● 运行中", theme::SUCCESS_BG, theme::SUCCESS_TEXT)
+                    badge("● Работает", theme::SUCCESS_BG, theme::SUCCESS_TEXT)
                 } else {
                     badge(status_label(inst.status), theme::BORDER, MUTED)
                 };
@@ -200,7 +200,7 @@ pub fn view_full(app: &EnvBoxApp) -> Element<'_, Message> {
                     button(
                         row![
                             icon(Icon::Stop, theme::DANGER_TEXT, 11.0),
-                            text("终止进程树")
+                            text("Завершить дерево процессов")
                                 .size(TEXT_BODY)
                                 .color(theme::DANGER_TEXT)
                                 .font(font::ui_font())
@@ -212,7 +212,7 @@ pub fn view_full(app: &EnvBoxApp) -> Element<'_, Message> {
                     .style(danger_btn)
                     .on_press(Message::InstanceStop(inst.id))
                 } else {
-                    button(text("已结束").size(TEXT_BODY).color(FAINT))
+                    button(text("Завершён").size(TEXT_BODY).color(FAINT))
                         .padding(Padding::from([6, 14]))
                         .style(secondary_btn)
                 };
@@ -225,7 +225,7 @@ pub fn view_full(app: &EnvBoxApp) -> Element<'_, Message> {
                         button(
                             row![
                                 icon(Icon::ExternalLink, INK_2, 11.0),
-                                text("打开位置")
+                                text("Открыть расположение")
                                     .size(TEXT_BODY)
                                     .color(INK_2)
                                     .font(font::ui_font()),
@@ -246,12 +246,12 @@ pub fn view_full(app: &EnvBoxApp) -> Element<'_, Message> {
                         column![
                             name_row,
                             row![
-                                text(format!("衍生子进程: {} 个", count))
+                                text(format!("Дочерних процессов: {}", count))
                                     .size(TEXT_CAPTION)
                                     .color(MUTED)
                                     .font(font::ui_font()),
                                 text("·").size(TEXT_CAPTION).color(FAINT),
-                                text(format!("实例 ID: {}", short_id(inst.id)))
+                                text(format!("ID экземпляра: {}", short_id(inst.id)))
                                     .size(TEXT_CAPTION)
                                     .color(FAINT)
                                     .font(font::ui_font()),
@@ -274,7 +274,7 @@ pub fn view_full(app: &EnvBoxApp) -> Element<'_, Message> {
             });
 
         column![
-            text("本次会话实例")
+            text("Экземпляры этого сеанса")
                 .size(TEXT_SECTION)
                 .color(INK)
                 .font(font::name_font()),
@@ -299,7 +299,7 @@ fn instance_filter_bar<'a>(
     selected_name: Option<&'a str>,
 ) -> Element<'a, Message> {
     let all_selected = app.instance_filter.is_none();
-    let mut filters = row![button(text("全部").size(TEXT_BODY).font(font::ui_font()))
+    let mut filters = row![button(text("Все").size(TEXT_BODY).font(font::ui_font()))
         .padding(Padding::from([5, 10]))
         .style(move |_theme, _status| theme::tab_btn_style(all_selected))
         .on_press(Message::InstanceFilter(None)),]
@@ -330,12 +330,12 @@ fn instance_filter_bar<'a>(
     }
 
     let label = selected_name
-        .map(|name| format!("当前筛选：{name}"))
+        .map(|name| format!("Фильтр: {name}"))
         .unwrap_or_else(|| {
             if app.instance_filter.is_some() {
-                "当前筛选：应用已删除".into()
+                "Фильтр: приложение удалено".into()
             } else {
-                "查看全部应用的实例".into()
+                "Экземпляры всех приложений".into()
             }
         });
 
